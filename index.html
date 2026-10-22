@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Website trình chiếu Chương 2 · Chủ đề 3 (VNR202): Dĩ bất biến, ứng vạn biến.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}*,*::before,*::after{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Dĩ bất biến, ứng vạn biến</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;1,500&family=Big+Shoulders+Display:wght@700;800;900&display=swap">
+<style>
+/* Layout: one bamboo culm on the left third is the progress line; the slide text lives in the right two-thirds. One committed dark world. */
+:root {
+  --ground: #163828;      /* lá tre già */
+  --ground-2: #21503a;
+  --paper: #efe8d5;       /* giấy dó, text only */
+  --muted: #b7c8a5;
+  --son: #f2835f;         /* son, dates */
+  --culm: #d8b24a;        /* tre đằng ngà */
+  --culm-dark: #9c7a26;
+  --culm-light: #f1d987;
+  --stripe: #4f7d3b;
+  --leaf: #79a85f;
+  --leaf-2: #3f7348;
+  --leaf-3: #5c9150;
+  --culm-old: #c49b3a;
+  --culm-young: #bdb84e;
+  --grove: #1d4632;
+  --grove-leaf: #24543c;
+  --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --u: min(1vh, 0.62vw);
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--ground);
+  color: var(--paper);
+  font-family: var(--body);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--culm); color: var(--ground); }
+:focus-visible { outline: 3px solid var(--culm-light); outline-offset: 4px; border-radius: 4px; }
+
+.stage {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 34fr) minmax(0, 66fr);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.grove { position: relative; min-width: 0; }
+.grove canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.deck { position: relative; min-width: 0; }
+.slide {
+  position: absolute;
+  inset: calc(var(--u) * 8) calc(var(--u) * 6) calc(var(--u) * 12) calc(var(--u) * 2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+  animation: arrive 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide.back { animation-name: arrive-back; }
+/* dates follow their heading instead of sitting above it */
+.slide > *, .txt > * { order: 3; }
+.slide > h1, .slide > h2, .slide > q, .slide > .row, .txt > h1, .txt > h2, .txt > q, .txt > .row { order: 1; }
+.slide > .date, .txt > .date { order: 2; }
+/* photo slides: text beside one archival print, credited underneath */
+.slide.has-photo { flex-direction: row; align-items: center; gap: calc(var(--u) * 5); }
+.txt { flex: 1.25 1 0; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--u) * 3); }
+.photo { flex: 1 1 0; min-width: 0; margin: 0; display: grid; gap: calc(var(--u) * 1.2); }
+.photo img { width: 100%; max-height: 58vh; object-fit: contain; object-position: left center; display: block;
+  box-shadow: 0 calc(var(--u) * 1.2) calc(var(--u) * 3.5) rgba(4, 18, 11, 0.55); }
+.photo figcaption { font-size: max(12px, calc(var(--u) * 1.8)); line-height: 1.4; color: var(--muted); max-width: 52ch; }
+.photo figcaption span { opacity: 0.8; }
+.has-photo .split { grid-template-columns: minmax(0, 1fr); gap: calc(var(--u) * 2.4); }
+.has-photo .stat .big { font-size: calc(var(--u) * 9); }
+.has-photo .stat + .stat .big, .has-photo .stats.small .big { font-size: calc(var(--u) * 5); }
+.has-photo h2 { font-size: calc(var(--u) * 6.6); }
+.has-photo h1 { font-size: calc(var(--u) * 11.5); }
+.has-photo p, .has-photo li { font-size: max(15px, calc(var(--u) * 2.7)); }
+.has-photo .src { font-size: max(13px, calc(var(--u) * 2.1)); }
+.has-photo q, .has-photo .quote { font-size: calc(var(--u) * 3.8); }
+.has-photo .date { font-size: calc(var(--u) * 4.2); }
+.has-photo .photo { flex-grow: 0.95; }
+.has-photo .photo figcaption { font-size: max(12px, calc(var(--u) * 1.7)); }
+@keyframes arrive { from { transform: translateX(calc(var(--u) * -4)); filter: blur(6px); opacity: 0.2; } }
+@keyframes arrive-back { from { transform: translateX(calc(var(--u) * 4)); filter: blur(6px); opacity: 0.2; } }
+
+h1, h2, .big, .date, .word {
+  font-family: var(--display);
+  text-wrap: balance;
+  margin: 0;
+}
+h1 { font-size: calc(var(--u) * 15); font-weight: 900; line-height: 1.16; letter-spacing: -0.01em; }
+h2 { font-size: calc(var(--u) * 8.4); font-weight: 900; line-height: 1.24; text-transform: uppercase; letter-spacing: 0.005em; }
+.date { font-size: calc(var(--u) * 5); font-weight: 800; color: var(--son); letter-spacing: 0.03em; font-variant-numeric: tabular-nums; }
+.big { font-size: calc(var(--u) * 15); font-weight: 900; line-height: 0.9; color: var(--culm); font-variant-numeric: tabular-nums; }
+p, li { font-size: max(15px, calc(var(--u) * 3.1)); line-height: 1.42; max-width: 44ch; margin: 0; }
+.muted { color: var(--muted); }
+ul { list-style: none; padding: 0; margin: 0; display: grid; gap: calc(var(--u) * 1.4); }
+li { padding-left: 1.1em; position: relative; }
+li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.42em; height: 2px; background: var(--culm); }
+q, .quote { font-size: calc(var(--u) * 4.4); font-weight: 500; line-height: 1.32; max-width: 30ch; }
+.quote { font-style: italic; }
+q { quotes: "“" "”"; }
+.src { font-size: max(13px, calc(var(--u) * 2.2)); color: var(--muted); max-width: 60ch; }
+em { font-style: normal; color: var(--culm-light); }
+
+.stats { display: grid; gap: calc(var(--u) * 2.4); }
+.stats { grid-template-columns: max-content minmax(0, 1fr); column-gap: calc(var(--u) * 4); }
+.stat { display: grid; grid-template-columns: subgrid; grid-column: span 2; align-items: baseline; gap: calc(var(--u) * 3); }
+.stat .big { font-size: calc(var(--u) * 11); white-space: nowrap; }
+/* one giant figure per slide: the rest step down */
+.stats.small .big, .stat + .stat .big { font-size: calc(var(--u) * 5.6); }
+.thanks { font-family: var(--display); font-weight: 800; font-size: calc(var(--u) * 4.4); color: var(--paper); margin: 0; }
+
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * 5); }
+.split > div { display: grid; gap: calc(var(--u) * 1.6); align-content: start; border-top: 2px solid var(--culm-dark); padding-top: calc(var(--u) * 1.6); }
+.split h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: calc(var(--u) * 4.2); letter-spacing: 0.02em; text-transform: uppercase; }
+.split .keep h3 { color: var(--culm); }
+.split .bend h3 { color: var(--leaf); }
+
+.words { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * 3.2) calc(var(--u) * 5); }
+.words div { display: grid; grid-template-rows: subgrid; grid-row: span 2; gap: calc(var(--u) * 0.6); }
+.word { font-size: calc(var(--u) * 6); font-weight: 900; line-height: 1; color: var(--culm); text-transform: uppercase; }
+
+.row { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 2) calc(var(--u) * 6); align-items: baseline; }
+
+.chrome {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--u) * 3);
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--display); font-weight: 700; font-size: max(15px, calc(var(--u) * 2.4));
+  color: var(--muted); letter-spacing: 0.06em; font-variant-numeric: tabular-nums;
+}
+.chrome .hint { font-family: var(--body); font-weight: 400; letter-spacing: 0; font-size: max(13px, calc(var(--u) * 1.9)); margin-right: 12px; }
+.chrome button {
+  appearance: none; border: 1.5px solid var(--ground-2); background: transparent; color: var(--paper);
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.chrome button:hover { background: var(--ground-2); border-color: var(--culm-dark); }
+.chrome button:disabled { opacity: 0.35; cursor: default; background: transparent; }
+.chrome svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .stage { grid-template-columns: minmax(0, 26fr) minmax(0, 74fr); }
+  :root { --u: min(1vh, 0.95vw); }
+  .slide { overflow-y: auto; inset: 24px 0 72px 8px; justify-content: flex-start; }
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .stat { grid-template-columns: minmax(0, 1fr); grid-column: auto; gap: 4px; }
+  .split, .words { grid-template-columns: minmax(0, 1fr); }
+  .slide.has-photo { flex-direction: column; align-items: stretch; }
+  .photo img { max-height: 32vh; }
+  .chrome .hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide { animation: none; }
+}
+</style>
+
+<main class="stage">
+  <div class="grove" aria-hidden="true"><canvas id="bamboo"></canvas></div>
+  <div class="deck" id="deck">
+
+    <section class="slide has-photo" data-gust="0.5" data-amb="0.25">
+      <div class="txt">
+        <h1>Dĩ bất biến,<br>ứng vạn biến</h1>
+        <p class="date">1945 – 1954</p>
+        <p class="muted">Chương 2 · Chủ đề 3. Giữ vững chính quyền non trẻ và đường lối kháng chiến chống Pháp: gốc rễ của ngoại giao cây tre Việt Nam.</p>
+      </div>
+      <figure class="photo"><img src="img/badinh.jpg" alt="Lễ Độc lập tại quảng trường Ba Đình, Hà Nội, 2/9/1945" loading="eager"><figcaption>Lễ Độc lập tại quảng trường Ba Đình, Hà Nội, 2/9/1945 · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide has-photo" data-gust="1.4" data-amb="1">
+      <div class="txt">
+        <p class="date">9/1945</p>
+        <h2>Ngàn cân treo sợi tóc</h2>
+        <div class="stats">
+          <div class="stat"><span class="big">2 triệu</span><p>người chết vì nạn đói năm 1945. Kho bạc gần như trống rỗng.</p></div>
+          <div class="stat"><span class="big">95%</span><p>dân số không biết chữ.</p></div>
+          <div class="stat"><span class="big">20 vạn</span><p>quân Tưởng ở miền Bắc. Đêm 23/9/1945, Pháp nổ súng đánh Sài Gòn.</p></div>
+        </div>
+      </div>
+      <figure class="photo"><img src="img/famine.jpg" alt="Nạn đói năm 1945. Ảnh: Võ An Ninh" loading="eager"><figcaption>Nạn đói năm 1945. Ảnh: Võ An Ninh · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide" data-gust="0.6" data-amb="0.3">
+      <p class="date">25/11/1945</p>
+      <h2>Chỉ thị “Kháng chiến kiến quốc”</h2>
+      <ul>
+        <li>Kẻ thù chính: <em>thực dân Pháp</em>.</li>
+        <li>Khẩu hiệu: “Dân tộc trên hết, Tổ quốc trên hết”.</li>
+        <li>Vừa kháng chiến, vừa xây dựng đất nước.</li>
+      </ul>
+      <p class="src">Kết quả: đầu 1946 đẩy lùi nạn đói · 6/1/1946 bầu Quốc hội lần đầu · cuối 1946 thêm 2,5 triệu người biết chữ.</p>
+    </section>
+
+    <section class="slide" data-gust="0.9" data-amb="0.35">
+      <p class="date">9/1945 – 2/1946</p>
+      <h2>Hòa với Tưởng để đánh Pháp</h2>
+      <div class="split">
+        <div class="bend"><h3>Nhượng</h3><ul><li>Lương thực cho 20 vạn quân Tưởng</li><li>Cho tiêu tiền quan kim, quốc tệ</li><li>70 ghế Quốc hội không qua bầu cử</li></ul></div>
+        <div class="keep"><h3>Giữ</h3><p class="quote">“Độc lập về chính trị, nhân nhượng về kinh tế.”</p></div>
+      </div>
+    </section>
+
+    <section class="slide has-photo" data-gust="1" data-amb="0.4">
+      <div class="txt">
+        <p class="date">6/3/1946 · Hiệp định Sơ bộ</p>
+        <div class="row"><span class="big">15.000</span><p>quân Pháp ra Bắc thay quân Tưởng, rút dần trong <em>5 năm</em>.</p></div>
+        <p>Đổi lại, Pháp công nhận Việt Nam là một <em>quốc gia tự do</em>, có chính phủ, quân đội, tài chính riêng.</p>
+        <p class="src">Trước đó, 28/2/1946: Hiệp ước Trùng Khánh, Tưởng và Pháp thỏa thuận Tưởng rút về, Pháp ra Bắc.<br>Sau đó, 9/3/1946: Chỉ thị “Hòa để tiến”.</p>
+      </div>
+      <figure class="photo"><img src="img/sobo.jpg" alt="Lễ ký Hiệp định Sơ bộ tại số 38 Lý Thái Tổ, Hà Nội, 6/3/1946" loading="eager"><figcaption>Lễ ký Hiệp định Sơ bộ tại số 38 Lý Thái Tổ, Hà Nội, 6/3/1946 · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide has-photo" data-gust="1.15" data-amb="0.8">
+      <div class="txt">
+        <p class="date">14/9/1946 · Tạm ước</p>
+        <h2>Nhân nhượng có nguyên tắc</h2>
+        <div class="split">
+          <div class="bend"><h3>Cành: được nhượng</h3><ul><li>Quyền lợi kinh tế, văn hóa</li><li>Thời gian</li><li>Quân số</li></ul></div>
+          <div class="keep"><h3>Gốc: không nhượng</h3><ul><li>Độc lập, chủ quyền</li></ul><p class="src">Đổi lại: cuối 1946 có khoảng 8 vạn quân chính quy. Nhưng ta càng nhượng, Pháp càng lấn.</p></div>
+        </div>
+      </div>
+      <figure class="photo"><img src="img/moutet.jpg" alt="Hồ Chí Minh và Bộ trưởng Pháp Marius Moutet bắt tay sau khi ký Tạm ước, 1946" loading="eager"><figcaption>Hồ Chí Minh và Bộ trưởng Pháp Marius Moutet bắt tay sau khi ký Tạm ước, 1946 · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide has-photo" data-gust="0" data-amb="0">
+      <div class="txt">
+        <p class="date">19/12/1946 · Lời kêu gọi toàn quốc kháng chiến</p>
+        <q>Chúng ta thà hy sinh tất cả, chứ nhất định không chịu mất nước, nhất định không chịu làm nô lệ.</q>
+        <p class="muted">Hồ Chí Minh</p>
+      </div>
+      <figure class="photo"><img src="img/tuve.jpg" alt="Tổ tự vệ chợ Đồng Xuân, Hà Nội, mùa đông năm 1946" loading="eager"><figcaption>Tổ tự vệ chợ Đồng Xuân, Hà Nội, mùa đông năm 1946 · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide" data-gust="0.5" data-amb="0.25">
+      <h2>Kháng chiến chống Pháp</h2>
+      <div class="words">
+        <div><span class="word">Toàn dân</span><p>Mỗi người dân là một chiến sĩ.</p></div>
+        <div><span class="word">Toàn diện</span><p>Quân sự, kinh tế, văn hóa, ngoại giao.</p></div>
+        <div><span class="word">Lâu dài</span><p>Ta yếu hơn, nên đánh từ từ, lớn dần lên.</p></div>
+        <div><span class="word">Tự lực</span><p>Dựa vào sức mình là chính.</p></div>
+      </div>
+      <p class="src">Chỉ thị “Toàn dân kháng chiến” 12/12/1946 · Lời kêu gọi 19/12/1946 · “Kháng chiến nhất định thắng lợi”, Trường Chinh, 1947.</p>
+    </section>
+
+    <section class="slide" data-gust="0.7" data-amb="0.3">
+      <h2>Đường lối đúng, chiến trường chứng minh</h2>
+      <div class="stats small">
+        <div class="stat"><span class="big">1947</span><p>Việt Bắc Thu Đông: làm phá sản kế hoạch “đánh nhanh, thắng nhanh” của Pháp.</p></div>
+        <div class="stat"><span class="big">1950</span><p>Biên giới Thu Đông: lần đầu ta chủ động mở chiến dịch lớn, giành thế chủ động.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-gust="0.5" data-amb="0.25">
+      <p class="date">2/1951 · Chiêm Hóa, Tuyên Quang</p>
+      <h2>Đại hội II</h2>
+      <ul>
+        <li>Đảng ra hoạt động công khai: <em>Đảng Lao động Việt Nam</em>.</li>
+        <li>Hồ Chí Minh làm Chủ tịch Đảng, Trường Chinh làm Tổng Bí thư.</li>
+        <li>Nhiệm vụ: đánh đuổi thực dân Pháp và can thiệp Mỹ, giành độc lập hoàn toàn.</li>
+      </ul>
+    </section>
+
+    <section class="slide has-photo" data-gust="1.2" data-amb="0.6">
+      <div class="txt">
+        <p class="date">13/3 – 7/5/1954</p>
+        <div class="row"><span class="big">56</span><h2>ngày đêm<br>Điện Biên Phủ</h2></div>
+        <p>Tập đoàn cứ điểm mà Pháp gọi là “pháo đài không thể công phá” thất thủ. Tướng De Castries bị bắt sống.</p>
+        <p class="quote">“Lừng lẫy năm châu, chấn động địa cầu.”</p>
+      </div>
+      <figure class="photo"><img src="img/dbp.jpg" alt="Bộ đội cắm cờ trên sở chỉ huy của Pháp vừa bị chiếm, Điện Biên Phủ, 1954. Ảnh: Quân đội Nhân dân Việt Nam" loading="eager"><figcaption>Bộ đội cắm cờ trên sở chỉ huy của Pháp vừa bị chiếm, Điện Biên Phủ, 1954. Ảnh: Quân đội Nhân dân Việt Nam · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide has-photo" data-gust="0.6" data-amb="0.3">
+      <div class="txt">
+        <p class="date">21/7/1954 · Hiệp định Giơnevơ</p>
+        <h2>Vừa đánh, vừa đàm</h2>
+        <ul>
+          <li>Công nhận độc lập, chủ quyền, thống nhất, toàn vẹn lãnh thổ của Việt Nam, Lào, Campuchia.</li>
+          <li>Tạm chia ở vĩ tuyến 17, hẹn tổng tuyển cử 7/1956.</li>
+        </ul>
+        <p class="muted">Thắng ngoài chiến trường thì mới có tiếng nói trên bàn đàm phán.</p>
+      </div>
+      <figure class="photo"><img src="img/geneva.jpg" alt="Phiên họp toàn thể cuối cùng về Đông Dương, Hội nghị Giơnevơ, 21/7/1954" loading="eager"><figcaption>Phiên họp toàn thể cuối cùng về Đông Dương, Hội nghị Giơnevơ, 21/7/1954 · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide has-photo" data-gust="0.4" data-amb="0.2">
+      <div class="txt">
+        <h2>Ba bài học</h2>
+        <ul>
+          <li><em>Giữ</em> mục tiêu độc lập thật chắc, còn cách làm thì linh hoạt.</li>
+          <li><em>Tận dụng</em> mâu thuẫn của đối phương: hòa Tưởng để đánh Pháp.</li>
+          <li><em>Dựa</em> vào dân: từ hũ gạo cứu đói đến dân công lên Điện Biên.</li>
+        </ul>
+      </div>
+      <figure class="photo"><img src="img/keophao.jpg" alt="Kéo pháo vào trận địa Điện Biên Phủ, 1954" loading="eager"><figcaption>Kéo pháo vào trận địa Điện Biên Phủ, 1954 · <span>Wikimedia Commons, phạm vi công cộng</span></figcaption></figure>
+    </section>
+
+    <section class="slide" data-gust="0.8" data-amb="0.35" data-annot="1">
+      <p class="date">12/2021 · Hội nghị Đối ngoại toàn quốc</p>
+      <h2>Ngoại giao cây tre</h2>
+      <p class="quote">“Gốc vững, thân chắc, cành uyển chuyển.”</p>
+      <p class="muted">Tổng Bí thư Nguyễn Phú Trọng. Gốc là độc lập, chủ quyền: không lay. Cành là cách ứng xử: mềm, nghiêng theo gió nhưng không gãy. Y như năm 1946.</p>
+    </section>
+
+    <section class="slide" data-gust="0.5" data-amb="0.25">
+      <h2>Hôm nay</h2>
+      <div class="split">
+        <div class="keep"><h3>Bốn không</h3><ul><li>Không liên minh quân sự</li><li>Không theo nước này chống nước kia</li><li>Không cho đặt căn cứ quân sự nước ngoài</li><li>Không dùng hay dọa dùng vũ lực</li></ul></div>
+        <div class="bend"><h3>Biển Đông</h3><ul><li>Chủ quyền giữ tới cùng</li><li>Giải quyết bằng hòa bình, theo Công ước Luật Biển 1982 (UNCLOS)</li></ul><p class="src">Nghị quyết 59-NQ/TW (2025): hội nhập sâu hơn, lợi ích quốc gia trên hết.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-gust="0.4" data-amb="0.2">
+      <h2>Với sinh viên</h2>
+      <div class="split">
+        <div><h3>Bài nhóm</h3><p><em>Gốc:</em> không gian lận.</p><p><em>Cành:</em> góp ý nhẹ nhàng, cùng chia lại việc thay vì cãi nhau.</p></div>
+        <div><h3>Trên mạng</h3><p><em>Gốc:</em> chủ quyền biển đảo.</p><p><em>Cành:</em> tranh luận đàng hoàng, có nguồn rõ ràng, không chửi bới.</p></div>
+      </div>
+    </section>
+
+    <section class="slide" data-gust="0.9" data-amb="0.5">
+      <h2>Cho 15.000 quân Pháp vào miền Bắc: khôn hay liều?</h2>
+      <p>Nhường tới đâu thì còn là linh hoạt, tới đâu thì thành mất nguyên tắc?</p>    </section>
+
+    <section class="slide" data-gust="0.5" data-amb="0.25">
+      <h2>Liều, nhưng có tính toán</h2>
+      <div class="split">
+        <div class="bend"><h3>Liều</h3><p>Cho quân Pháp vào tận miền Bắc.</p></div>
+        <div class="keep"><h3>Khôn</h3><ul><li>Đẩy 20 vạn quân Tưởng và tay sai về nước</li><li>Có thêm thời gian xây dựng lực lượng</li><li>Pháp công nhận Việt Nam là quốc gia tự do</li></ul></div>
+      </div>
+      <p><em>Ranh giới:</em> nhượng cách làm, thời gian, quyền lợi nhỏ thì được. Độc lập, chủ quyền thì không. Bằng chứng: 12/1946 Pháp đòi tới độc lập, ta kháng chiến ngay.</p>
+    </section>
+
+    <section class="slide" data-gust="0.3" data-amb="0.15">
+      <h1>Độc lập thì giữ nguyên.<br>Cách làm thì tùy lúc mà đổi.</h1>
+      <p class="muted">Năm 1946 là “hòa để tiến”. Hôm nay là “ngoại giao cây tre”.</p>
+      <p class="thanks">Cảm ơn thầy/cô và các bạn đã lắng nghe</p>
+    </section>
+
+    <div class="chrome">
+      <span class="hint" id="hint">← → để chuyển · F toàn màn hình</span>
+      <button type="button" id="prev" aria-label="Slide trước"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span id="count">01 / 19</span>
+      <button type="button" id="next" aria-label="Slide sau"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <p class="sr" aria-live="polite" id="live"></p>
+  </div>
+</main>
+
+<script>
+(() => {
+  // Chặng = one speaker's stretch: first slide index, label, period written on the node once passed.
+  const LEGS = [
+    { at: 1, who: "Người 1", what: "Ngàn cân treo sợi tóc", when: "9–11/1945" },
+    { at: 3, who: "Người 2", what: "Hòa để tiến", when: "1945–1946" },
+    { at: 6, who: "Người 3", what: "Đường lối kháng chiến", when: "1946–1950" },
+    { at: 9, who: "Người 4", what: "Đến Điện Biên Phủ", when: "1951–1954" },
+    { at: 13, who: "Người 5", what: "Cây tre hôm nay", when: "2021 – nay" },
+  ];
+  const slides = [...document.querySelectorAll(".slide")];
+  const N = slides.length;
+  console.assert(N === 19 && LEGS.every((l, i) => l.at < N && (!i || l.at > LEGS[i - 1].at)), "slide/leg mismatch");
+
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (id) => document.getElementById(id);
+  let cur = 0;
+
+  function legOf(i) { let k = -1; LEGS.forEach((l, j) => { if (i >= l.at) k = j; }); return k; }
+
+  // ---- bamboo physics: bend is a damped spring about a fixed root
+  let bend = 0, vel = 0, amb = 0.25, t = 0;
+  const BASE = 4, NODES = N + BASE;
+  let grown = 0, growTarget = BASE + 1;
+
+  function show(i, dir) {
+    i = Math.max(0, Math.min(N - 1, i));
+    if (i === cur && dir) return;
+    slides.forEach((s, j) => { s.hidden = j !== i; s.classList.toggle("back", dir < 0); });
+    const s = slides[i];
+    s.style.animation = "none"; void s.offsetWidth; s.style.animation = "";
+    cur = i;
+    const gust = parseFloat(s.dataset.gust) || 0;
+    amb = parseFloat(s.dataset.amb) || 0;
+    if (!reduce && dir) { vel += gust * 2.6 * dir; if (gust >= 0.9) shed(Math.round(gust * 5), dir); }
+    if (gust === 0) { vel *= 0.2; }
+    growTarget = BASE + i + 1;
+    if (reduce) grown = growTarget;
+    $("count").textContent = String(i + 1).padStart(2, "0") + " / " + N;
+    $("prev").disabled = i === 0;
+    $("next").disabled = i === N - 1;
+    $("hint").hidden = i !== 0;
+    const k = legOf(i);
+    $("live").textContent = (k >= 0 ? LEGS[k].who + ". " : "") + "Slide " + (i + 1) + " trên " + N;
+    stillUntil = 0;
+  }
+
+  addEventListener("keydown", (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); show(cur + 1, 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); show(cur - 1, -1); }
+    else if (k === "Home") show(0, -1);
+    else if (k === "End") show(N - 1, 1);
+    else if (k === "f" || k === "F") {
+      const d = document;
+      (d.fullscreenElement ? d.exitFullscreen() : d.documentElement.requestFullscreen?.())?.catch?.(() => {});
+    }
+  });
+  $("next").addEventListener("click", () => show(cur + 1, 1));
+  $("prev").addEventListener("click", () => show(cur - 1, -1));
+  $("deck").addEventListener("click", (e) => {
+    if (e.target.closest("button")) return;
+    show(cur + 1, 1);
+  });
+
+  // ---- drawing
+  const cv = $("bamboo"), cx = cv.getContext("2d");
+  const css = getComputedStyle(document.documentElement);
+  const C = Object.fromEntries(["ground", "ground-2", "paper", "muted", "son", "culm", "culm-dark", "culm-light", "stripe", "leaf", "leaf-2", "leaf-3", "culm-old", "culm-young", "grove", "grove-leaf"].map((n) => [n, css.getPropertyValue("--" + n).trim()]));
+  let W = 0, H = 0, dpr = 1;
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    dpr = Math.min(2, devicePixelRatio || 1);
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener("resize", resize);
+
+  // internode lengths: shorter near the root, like a real culm
+  function lengths(full) {
+    const raw = Array.from({ length: NODES }, (_, k) => 1 + 0.7 * (k / (NODES - 1)));
+    const sum = raw.reduce((a, b) => a + b, 0);
+    return raw.map((r) => (r / sum) * full);
+  }
+
+  function draw() {
+    cx.clearRect(0, 0, W, H);
+    const narrow = W < 220;
+    const baseX = W * (narrow ? 0.5 : 0.56), baseY = H - Math.max(18, H * 0.035);
+    const full = baseY - H * 0.04;
+    const L = lengths(full);
+    const starts = L.map((_, k) => L.slice(0, k).reduce((a, b) => a + b, 0));
+    const gi = Math.floor(grown), partial = grown - gi;
+    const len = gi < NODES ? starts[gi] + L[gi] * partial : full;
+
+    const sway = bend + amb * 0.06 * Math.sin(t * 1.3) + amb * 0.03 * Math.sin(t * 2.9 + 1);
+    const reach = W * (narrow ? 0.4 : 0.34);
+    const X = (s) => baseX + sway * reach * Math.pow(s / full, 1.8);
+    const Y = (s) => baseY - s;
+    const w0 = Math.max(10, Math.min(W * 0.075, 40));
+    const wid = (s) => w0 * (1 - 0.55 * (s / full));
+    const slope = (s) => sway * reach * 1.8 * Math.pow(Math.max(s, 1) / full, 0.8) / full;
+
+    // distant grove: three faint culms swaying a beat behind the main one
+    [[0.16, 0.92, 0.6, 1.3], [0.86, 0.78, 0.45, 2.1], [0.34, 0.66, 0.35, 0.4]].forEach(([fx, fh, fw, ph]) => {
+      const gx = W * fx, gh = H * fh, gw = Math.max(5, w0 * fw), gs = sway * 0.6 + 0.04 * Math.sin(t * 0.9 + ph);
+      const gX = (s) => gx + gs * reach * 0.7 * Math.pow(s / gh, 1.8);
+      cx.fillStyle = C.grove; cx.beginPath();
+      for (let i = 0; i <= 12; i++) { const ss = gh * i / 12; cx.lineTo(gX(ss) - gw * (1 - 0.5 * i / 12) / 2, baseY - ss); }
+      for (let i = 12; i >= 0; i--) { const ss = gh * i / 12; cx.lineTo(gX(ss) + gw * (1 - 0.5 * i / 12) / 2, baseY - ss); }
+      cx.closePath(); cx.fill();
+      for (let n = 1; n < 9; n++) { const ss = gh * n / 9; cx.fillStyle = C["grove-leaf"]; cx.fillRect(gX(ss) - gw * 0.6, baseY - ss, gw * 1.2, 2); }
+      for (let n = 3; n < 9; n += 2) {
+        const ss = gh * n / 9, d = n % 4 === 1 ? 1 : -1;
+        for (let q = 0; q < 4; q++) leaf(gX(ss) + d * gw * 0.5, baseY - ss, (d > 0 ? 0 : Math.PI) + d * (0.7 + q * 0.2) + gs, Math.min(H * 0.06, W * 0.16) * (1 - q * 0.08), C["grove-leaf"], false);
+      }
+    });
+
+    // ground and roots: never move
+    cx.strokeStyle = C["culm-dark"]; cx.lineCap = "round";
+    cx.lineWidth = 2;
+    cx.beginPath(); cx.moveTo(baseX - w0 * 2.4, baseY + 1); cx.lineTo(baseX + w0 * 2.4, baseY + 1); cx.stroke();
+    [-1.6, -0.9, -0.3, 0.4, 1.1, 1.7].forEach((a, i) => {
+      cx.lineWidth = 2.5 - (i % 2) * 0.8;
+      cx.beginPath(); cx.moveTo(baseX + a * w0 * 0.22, baseY);
+      cx.quadraticCurveTo(baseX + a * w0 * 0.8, baseY + 8, baseX + a * w0 * 1.25, baseY + 14 + (i % 3) * 4);
+      cx.stroke();
+    });
+
+    const legNow = legOf(cur);
+    const annot = slides[cur].dataset.annot === "1";
+    const leafLen = Math.min(H * 0.075, W * 0.2);
+
+    // branches alternate sides node to node; leaves hang from them
+    LEGS.forEach((leg, j) => {
+      const s = starts[leg.at + BASE];
+      if (s > len - 1) return;
+      const side = j % 2 ? -1 : 1;
+      const nx = X(s), ny = Y(s);
+      const active = j === legNow;
+      const flutter = amb * 0.25 * Math.sin(t * 2.2 + j * 1.7);
+      const tilt = slope(s) * 1.4 + sway * 0.9 + flutter;
+      const blen = Math.min(H * 0.12, W * 0.3);
+      const bx = nx + side * blen * 0.8 + tilt * blen * 0.4, by = ny - blen * 0.55 + Math.abs(tilt) * 10;
+      cx.strokeStyle = C["culm-dark"]; cx.lineWidth = 2;
+      cx.beginPath(); cx.moveTo(nx, ny); cx.quadraticCurveTo(nx + side * blen * 0.3, ny - blen * 0.5, bx, by); cx.stroke();
+      // leaves hang in fans of 3-5 from the twig, drooping outward with the wind
+      const out = side > 0 ? 0 : Math.PI, col = active ? C.leaf : C["leaf-2"];
+      // long narrow blades hang one by one from a short twiglet, drooping rather than radiating
+      // three twiglets along the branch, each spreading a loose fan from near-level to drooping
+      const fan = (px, py, n, scale, ph) => { for (let q = 0; q < n; q++) {
+        const c = q === 1 ? C["leaf-3"] : col;
+        leaf(px, py, out + side * (0.12 + q * 0.38 + ph) + tilt * 1.2 + flutter * (1 + q * 0.15), leafLen * scale * (1.15 - q * 0.08), c);
+      } };
+      [[0.5, 0.75, 0.2], [0.78, 0.9, 0.05], [1, 1.05, 0]].forEach(([f, sc, ph], i) => {
+        const px = nx + (bx - nx) * f, py = ny + (by - ny) * f - blen * 0.12 * Math.sin(f * Math.PI);
+        fan(px, py, narrow ? 2 : (i === 2 ? 4 : 3), sc, ph);
+      });
+    });
+
+    // culm: flat matte gold, a hard leeward shade band, the đằng ngà stripe, swollen nodes
+    // the whip is only the growing internode, so the lit node below it stays on solid culm
+    const tipStart = Math.max(0, len - L[Math.max(0, Math.min(gi, NODES) - 1)] * 0.85);
+    for (let k = 0; k < NODES; k++) {
+      const s0 = starts[k];
+      if (s0 >= tipStart) break;
+      const s1 = Math.min(s0 + L[k], tipStart);
+      const steps = 8;
+      const strip = (fa, fb) => {
+        cx.beginPath();
+        for (let i = 0; i <= steps; i++) { const ss = s0 + (s1 - s0) * (i / steps); const x = X(ss) + (fa - 0.5) * wid(ss); i ? cx.lineTo(x, Y(ss)) : cx.moveTo(x, Y(ss)); }
+        for (let i = steps; i >= 0; i--) { const ss = s0 + (s1 - s0) * (i / steps); cx.lineTo(X(ss) + (fb - 0.5) * wid(ss), Y(ss)); }
+        cx.closePath(); cx.fill();
+      };
+      // older internodes are deeper gold, the youngest at the top turn green
+      const age = k / Math.max(1, gi - 1);
+      cx.fillStyle = gi - k <= 2 ? C["culm-young"] : age < 0.35 ? C["culm-old"] : C.culm; strip(0, 1);
+      cx.fillStyle = C["culm-light"]; cx.globalAlpha = 0.55; strip(0.12, 0.22); cx.globalAlpha = 1;
+      cx.fillStyle = C["culm-dark"]; strip(0.74, 1);
+      cx.fillStyle = C.stripe; cx.globalAlpha = 0.9;
+      const o = k % 2 ? 0.58 : 0.26; strip(o, o + 0.1);
+      cx.globalAlpha = 1;
+      if (s1 === s0 + L[k]) {
+        const nw = wid(s1), nx = X(s1), ny = Y(s1);
+        cx.fillStyle = C.culm; cx.beginPath(); cx.ellipse(nx, ny, nw * 0.54, 3.2, 0, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = C["culm-light"]; cx.fillRect(nx - nw / 2, ny + 2.5, nw * 0.74, 3);
+        cx.strokeStyle = C["culm-dark"]; cx.lineWidth = 1.5;
+        cx.beginPath(); cx.moveTo(nx - nw * 0.54, ny); cx.lineTo(nx + nw * 0.54, ny); cx.stroke();
+        // bẹ mo: papery sheath still clinging to the two youngest nodes
+        if (s1 > tipStart - L[k] * 2.2) {
+          const sh = L[k] * 0.45, sd = k % 2 ? 1 : -1;
+          cx.fillStyle = C["culm-dark"]; cx.globalAlpha = 0.75;
+          cx.beginPath();
+          cx.moveTo(nx - nw * 0.56, ny - 1); cx.lineTo(nx + nw * 0.56, ny - 1);
+          cx.lineTo(X(s1 + sh) + sd * nw * 0.35, Y(s1 + sh)); cx.closePath(); cx.fill();
+          cx.globalAlpha = 1;
+        }
+      }
+    }
+    // tip: the young top tapers to a point and nods over with the wind
+    {
+      const tl = len - tipStart, segs = 14, pts = [];
+      const nod = 0.5 + sway * 2;
+      for (let i = 0; i <= segs; i++) {
+        const f = i / segs, ss = tipStart + tl * f;
+        pts.push([X(ss) + nod * tl * 0.55 * f * f, Y(ss) + Math.abs(nod) * tl * 0.12 * f * f * f, 1.5 + (wid(ss) - 1.5) * Math.pow(1 - f, 2.4)]);
+      }
+      cx.fillStyle = C.culm; cx.beginPath();
+      pts.forEach(([x, y, w], i) => (i ? cx.lineTo(x - w / 2, y) : cx.moveTo(x - w / 2, y)));
+      for (let i = pts.length - 1; i >= 0; i--) cx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]);
+      cx.closePath(); cx.fill();
+      // a few leaves hang from the nodding top
+      // hang toward the current branch side so the speaker label opposite stays clear
+      const d = legNow % 2 ? -1 : 1, [ex, ey] = pts[segs], [mx2, my2] = pts[Math.round(segs * 0.55)];
+      for (let q = 0; q < 4; q++) {
+        const ang = Math.PI / 2 - d * (1.25 - q * 0.3) + sway * 1.3 + amb * 0.3 * Math.sin(t * 2.4 + q);
+        leaf(ex, ey, ang, leafLen * (0.95 - q * 0.07), q % 2 ? C.leaf : C["leaf-2"]);
+      }
+      for (let q = 0; q < 2; q++) leaf(mx2, my2, Math.PI / 2 - d * (0.8 + q * 0.4) + sway * 1.2, leafLen * 0.7, C["leaf-2"]);
+    }
+
+    // labels sit on the side away from that node's branch
+    if (!narrow) {
+      cx.textBaseline = "middle";
+      const fs = Math.max(14, Math.min(H * 0.027, 28));
+      LEGS.forEach((leg, j) => {
+        const s = starts[leg.at + BASE];
+        if (s > len - 1) return;
+        const active = j === legNow;
+        if (annot && !active) return;
+        const side = j % 2 ? -1 : 1;
+        cx.textAlign = side > 0 ? "right" : "left";
+        const nx = X(s) - side * (wid(s) / 2 + 14), ny = Y(s);
+        cx.fillStyle = active ? C.paper : C.muted;
+        cx.font = `800 ${fs * (active ? 1.25 : 1)}px "Big Shoulders Display", sans-serif`;
+        if (!active) {
+          const room = side > 0 ? nx - 4 : W - nx - 4;
+          let txt = leg.who.toUpperCase() + " · " + leg.when;
+          if (cx.measureText(txt).width > room) txt = leg.who.toUpperCase();
+          const k = Math.min(1, room / cx.measureText(txt).width);
+          if (k < 1) cx.font = `800 ${fs * k}px "Big Shoulders Display", sans-serif`;
+          cx.fillText(txt, nx, ny - fs * 0.7);
+        }
+        else {
+          // lifted above the node so the older branch just below never runs under it
+          const room = side > 0 ? nx - 4 : W - nx - 4;
+          const k = Math.min(1, room / Math.max(cx.measureText(leg.who.toUpperCase()).width, (cx.font = `500 ${fs * 0.85}px "Be Vietnam Pro", sans-serif`, cx.measureText(leg.what).width) * 1.0));
+          cx.font = `800 ${fs * 1.25 * k}px "Big Shoulders Display", sans-serif`;
+          cx.fillText(leg.who.toUpperCase(), nx, ny - fs * 1.7);
+          cx.font = `500 ${fs * 0.85 * k}px "Be Vietnam Pro", sans-serif`;
+          cx.fillStyle = C.culm;
+          cx.fillText(leg.what, nx, ny - fs * 0.4);
+          cx.fillStyle = C.son; cx.beginPath(); cx.arc(X(s), ny, Math.max(4, wid(s) * 0.2), 0, Math.PI * 2); cx.fill();
+        }
+      });
+      if (annot) {
+        cx.textAlign = "right";
+        const fs2 = Math.max(14, Math.min(H * 0.026, 26));
+        // CÀNH sits above the nodding crown, clear of the speaker label on the top node
+        cx.textAlign = "center";
+        cx.fillStyle = C.culm; cx.font = `900 ${fs2 * 1.4}px "Big Shoulders Display", sans-serif`;
+        cx.fillText("CÀNH", X(len) + 10, Y(len) - fs2 * 3.2);
+        cx.fillStyle = C.paper; cx.font = `500 ${fs2 * 0.8}px "Be Vietnam Pro", sans-serif`;
+        cx.fillText("ứng xử mềm dẻo", X(len) + 10, Y(len) - fs2 * 1.9);
+        cx.textAlign = "right";
+        const sA = starts[LEGS[1].at + BASE] + H * 0.15, sB = starts[LEGS[3].at + BASE] - H * 0.02;
+        [[len * 0.04, "GỐC", "độc lập, chủ quyền"], [(sA + sB) / 2, "THÂN", "lợi ích quốc gia"]].forEach(([s, a, b]) => {
+          const x = X(s) - wid(s) / 2 - 22, y = Y(s);
+          cx.strokeStyle = C.culm; cx.lineWidth = 1.5;
+          cx.beginPath(); cx.moveTo(x - 2, y + fs2 * 0.05); cx.lineTo(x + 20, y + fs2 * 0.05); cx.stroke();
+          cx.fillStyle = C.culm; cx.beginPath(); cx.arc(x + 20, y + fs2 * 0.05, 3, 0, Math.PI * 2); cx.fill();
+          cx.fillStyle = C.culm; cx.font = `900 ${fs2 * 1.4}px "Big Shoulders Display", sans-serif`;
+          cx.fillText(a, x - 10, y - fs2 * 0.55);
+          cx.fillStyle = C.paper; cx.font = `500 ${fs2 * 0.8}px "Be Vietnam Pro", sans-serif`;
+          cx.fillText(b, x - 10, y + fs2 * 0.65);
+        });
+      }
+    }
+  }
+
+  // an arched lanceolate blade; the tip sags below the axis like a real bamboo leaf
+  function leaf(x, y, ang, l, color, rib = true) {
+    const w = l * 0.12, sag = l * 0.1 * Math.sign(Math.cos(ang) || 1);
+    cx.save(); cx.translate(x, y); cx.rotate(ang);
+    cx.fillStyle = color;
+    cx.beginPath(); cx.moveTo(0, 0);
+    cx.bezierCurveTo(l * 0.2, -w, l * 0.6, -w * 0.7 + sag * 0.6, l, sag);
+    cx.bezierCurveTo(l * 0.6, w * 0.9 + sag * 0.6, l * 0.2, w, 0, 0);
+    cx.fill();
+    if (rib && l > 18) {
+      cx.strokeStyle = C["leaf-2"]; cx.globalAlpha = 0.6; cx.lineWidth = 1;
+      cx.beginPath(); cx.moveTo(l * 0.04, 0); cx.quadraticCurveTo(l * 0.55, sag * 0.4, l * 0.92, sag * 0.92); cx.stroke();
+      cx.globalAlpha = 1;
+    }
+    cx.restore();
+  }
+
+  // leaves torn off by a strong gust drift downwind and settle out of the frame
+  const drift = [];
+  function shed(n, dir) {
+    for (let i = 0; i < n; i++) drift.push({ x: W * (0.45 + Math.random() * 0.25), y: H * (0.1 + Math.random() * 0.5), vx: dir * (40 + Math.random() * 70), vy: 18 + Math.random() * 30, a: Math.random() * 6, va: (Math.random() - 0.5) * 3, life: 1, c: Math.random() < 0.5 ? C.leaf : C["leaf-3"] });
+  }
+  function drawDrift(dt) {
+    for (let i = drift.length - 1; i >= 0; i--) {
+      const d = drift[i];
+      d.x += d.vx * dt; d.y += d.vy * dt + Math.sin(t * 3 + i) * 0.6; d.a += d.va * dt; d.vx *= 0.995; d.life -= dt * 0.28;
+      if (d.life <= 0 || d.y > H) { drift.splice(i, 1); continue; }
+      cx.globalAlpha = Math.min(1, d.life * 1.5); leaf(d.x, d.y, d.a, Math.min(H * 0.05, 34), d.c, false); cx.globalAlpha = 1;
+    }
+  }
+
+  // ---- loop
+  let last = performance.now(), stillUntil = 0;
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!reduce) {
+      t += dt;
+      const k = 16, c = 2.6;
+      vel += (-k * bend - c * vel) * dt;
+      bend += vel * dt;
+      bend = Math.max(-0.9, Math.min(0.9, bend));
+      grown += (growTarget - grown) * Math.min(1, dt * 3.2);
+      if (Math.abs(growTarget - grown) < 0.002) grown = growTarget;
+    } else { bend = 0; amb = 0; grown = growTarget; }
+    draw();
+    if (!reduce) drawDrift(dt);
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  show(0, 0);
+  grown = reduce ? BASE + 1 : BASE * 0.6;
+  vel = reduce ? 0 : 1.2;
+  (document.fonts?.ready || Promise.resolve()).then(() => requestAnimationFrame(frame));
+})();
+</script>
+
+</body>
+</html>
