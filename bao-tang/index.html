@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="vi">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<title>Bảo tàng Cây tre · Kinh thành</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Big+Shoulders+Display:wght@800;900&display=swap">
+<style>
+/* Layout: full-screen WebGL room; a thin HUD in the corners, one caption panel that appears beside an exhibit. Same world as the presentation site. */
+:root {
+  --ground: #163828;
+  --wall: #1d4632;
+  --paper: #efe8d5;
+  --muted: #b7c8a5;
+  --son: #f2835f;
+  --culm: #d8b24a;
+  --culm-dark: #9c7a26;
+  --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--ground); color: var(--paper); font-family: var(--body); overflow: hidden; }
+::selection { background: var(--culm); color: var(--ground); }
+:focus-visible { outline: 3px solid var(--culm); outline-offset: 4px; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+#view:active { cursor: grabbing; }
+
+.hud { position: fixed; pointer-events: none; }
+.where {
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  left: max(16px, env(safe-area-inset-left, 0px));
+  font-family: var(--display); font-weight: 900; font-size: 22px; letter-spacing: 0.02em; text-transform: uppercase;
+}
+.where span { display: block; font-family: var(--body); font-weight: 500; font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--culm); }
+.keys {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  right: max(16px, env(safe-area-inset-right, 0px));
+  font-size: 13px; color: var(--muted); text-align: right;
+}
+.caption {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  left: max(16px, env(safe-area-inset-left, 0px));
+  max-width: min(520px, calc(100% - 32px));
+  background: rgba(14, 38, 26, 0.88); border-top: 2px solid var(--culm);
+  padding: 14px 18px 16px; display: grid; gap: 6px;
+  transition: opacity 0.4s, transform 0.4s; opacity: 1;
+}
+.caption.off { opacity: 0; transform: translateY(8px); }
+.caption b { font-family: var(--display); font-weight: 800; font-size: 26px; color: var(--son); letter-spacing: 0.02em; }
+.caption p { margin: 0; font-size: 15px; line-height: 1.45; }
+.caption small { color: var(--muted); font-size: 12px; }
+.caption .open { color: var(--culm); font-size: 13px; font-weight: 600; }
+/* diorama view: the model fills the left, the record sits in a panel on the right */
+.dio { position: fixed; inset: 0; pointer-events: none; }
+.dio aside {
+  pointer-events: auto; position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%);
+  background: rgba(14, 38, 26, 0.94); border-left: 2px solid var(--culm);
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) max(22px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 24px) 24px;
+  display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+}
+.dio b { font-family: var(--display); font-weight: 800; font-size: 30px; color: var(--son); letter-spacing: 0.02em; }
+.dio h2 { margin: 0; font-family: var(--display); font-weight: 900; font-size: 40px; line-height: 1.12; text-transform: uppercase; text-wrap: balance; }
+.dio p { margin: 0; line-height: 1.5; font-size: 15px; }
+.dio img { width: 100%; display: block; box-shadow: 0 8px 24px rgba(4, 18, 11, 0.6); }
+.dio small { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.dio button {
+  margin-top: auto; align-self: flex-start; appearance: none; border: 1.5px solid var(--culm); background: transparent; color: var(--paper);
+  font: 800 17px var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 18px; cursor: pointer;
+}
+.dio button:hover { background: var(--culm); color: var(--ground); }
+.fsbtn {
+  position: fixed; z-index: 5; top: calc(env(safe-area-inset-top, 0px) + 14px); right: max(16px, env(safe-area-inset-right, 0px));
+  width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer;
+  border: 1.5px solid var(--culm); background: rgba(14, 38, 26, 0.8); color: var(--paper); transition: right 0.3s;
+}
+.fsbtn:hover { background: var(--culm); color: var(--ground); }
+.fsbtn svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+body.dio-panel .fsbtn { right: calc(min(380px, 100%) + 16px); }
+.dio .panelbtn {
+  pointer-events: auto; position: absolute; top: calc(env(safe-area-inset-top, 0px) + 70px); left: max(16px, env(safe-area-inset-left, 0px));
+  appearance: none; border: 1.5px solid var(--culm); background: rgba(14, 38, 26, 0.8); color: var(--paper);
+  font: 600 13px var(--body); padding: 8px 12px; cursor: pointer;
+}
+.dio .panelbtn:hover { background: var(--culm); color: var(--ground); }
+.dio .hint { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); color: var(--muted); font-size: 13px; }
+@media (max-width: 760px) {
+  .dio aside { top: auto; height: 46%; width: 100%; border-left: 0; border-top: 2px solid var(--culm); }
+  .dio h2 { font-size: 30px; }
+  .dio .hint { bottom: calc(46% + 12px); }
+}
+
+.door {
+  position: fixed; inset: 0; display: grid; place-items: center; text-align: center;
+  background: rgba(16, 42, 30, 0.82); padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+.door > div { display: grid; gap: 14px; justify-items: center; max-width: 34rem; }
+.door h1 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(40px, 8vw, 84px); line-height: 1.12; text-wrap: balance; }
+.door p { margin: 0; color: var(--muted); line-height: 1.5; }
+.door button {
+  margin-top: 8px; appearance: none; border: 0; background: var(--culm); color: var(--ground);
+  font: 800 20px var(--display); letter-spacing: 0.06em; text-transform: uppercase; padding: 14px 28px; cursor: pointer;
+}
+.door button:hover { background: #e6c260; }
+.walk {
+  position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); right: max(16px, env(safe-area-inset-right, 0px));
+  width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--culm); background: rgba(14, 38, 26, 0.8); color: var(--paper);
+  display: none; place-items: center; touch-action: none;
+}
+.walk svg { width: 26px; height: 26px; stroke: currentColor; stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+@media (pointer: coarse) { .walk { display: grid; } .keys { display: none; } }
+</style>
+
+<canvas id="view" aria-label="Bảo tàng 3D kiểu kinh thành: đi từ ngoài hào qua cổng, sân, điện chính và hai dãy nhà trưng bày ảnh 1945–1954"></canvas>
+<div class="hud where">Dĩ bất biến, ứng vạn biến<span>Ngoài hào · đi qua cầu để vào cổng</span></div>
+<button class="fsbtn" id="fs" type="button" aria-label="Toàn màn hình" aria-pressed="false" title="Toàn màn hình (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+<div class="hud keys">W A S D hoặc ↑ ↓ ← → để đi · giữ Shift để chạy<br>Kéo chuột để nhìn quanh · F toàn màn hình<br>Đi nhanh: 1 cổng · 2 phòng 1945 · 3 sảnh · 4 phòng 1951–54 · 0 ra ngoài</div>
+<div class="hud caption off" id="cap" aria-live="polite"><b id="capDate"></b><p id="capText"></p><small>Ảnh: Wikimedia Commons, phạm vi công cộng</small><span class="open">Bấm vào ảnh hoặc nhấn E để xem mô hình 3D</span></div>
+<div class="dio" id="dio" hidden>
+  <p class="hint">Kéo để xoay · cuộn để phóng to · F toàn màn hình · Esc để quay lại</p>
+  <button type="button" class="panelbtn" id="dioPanel" aria-pressed="false">Ẩn bảng thông tin</button>
+  <aside aria-live="polite">
+    <b id="dioDate"></b>
+    <h2 id="dioTitle"></h2>
+    <p id="dioText"></p>
+    <img id="dioImg" src="img/badinh.jpg" alt="Ảnh tư liệu của sự kiện đang xem">
+    <small>Ảnh: Wikimedia Commons, phạm vi công cộng. Mô hình 3D là minh họa, không theo tỉ lệ và chi tiết thật.</small>
+    <button type="button" id="dioClose">Quay lại bảo tàng</button>
+  </aside>
+</div>
+<button class="walk" id="walk" aria-label="Giữ để đi tới"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<div class="door" id="door"><div>
+  <h1>Bảo tàng<br>Cây tre</h1>
+  <p>Bạn đứng ngoài hào. Đi qua cầu, vào cổng thành, băng qua sân. Dãy nhà bên trái là năm 1945, điện chính có sảnh cây tre và phòng 1946, dãy nhà bên phải là 1951–1954. Đến gần ảnh và bấm vào để xem mô hình 3D.</p>
+  <button type="button" id="enter">Vào bảo tàng</button>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+<script>
+(() => {
+  const css = getComputedStyle(document.documentElement);
+  const T = (n) => css.getPropertyValue("--" + n).trim();
+  const COL = { ground: T("ground"), wall: T("wall"), paper: T("paper"), muted: T("muted"), son: T("son"), culm: T("culm"), culmDark: T("culm-dark") };
+  // 1945 in the west hall, 1946 at the back of the main hall, 1951–1954 in the east hall
+  const EXHIBITS = [
+    { img: "badinh", p: [-30.95, 3.55, -1.5], r: Math.PI / 2, date: "2/9/1945", text: "Lễ Độc lập tại quảng trường Ba Đình, Hà Nội. Hồ Chí Minh đọc Tuyên ngôn độc lập." },
+    { img: "famine", p: [-30.95, 3.55, 5.5], r: Math.PI / 2, date: "1945", text: "Nạn đói năm 1945 làm khoảng 2 triệu người chết. Ảnh: Võ An Ninh." },
+    { img: "sobo", p: [-9.5, 6.25, -31.45], r: 0, date: "6/3/1946", text: "Lễ ký Hiệp định Sơ bộ tại số 38 Lý Thái Tổ, Hà Nội. Hòa với Pháp để đẩy 20 vạn quân Tưởng về nước." },
+    { img: "moutet", p: [0, 6.25, -31.45], r: 0, date: "14/9/1946", text: "Hồ Chí Minh và Bộ trưởng Pháp Marius Moutet bắt tay sau khi ký Tạm ước: kéo dài thêm thời gian hòa hoãn." },
+    { img: "tuve", p: [9.5, 6.25, -31.45], r: 0, date: "Mùa đông 1946", text: "Tổ tự vệ chợ Đồng Xuân, Hà Nội. Ngày 19/12/1946: toàn quốc kháng chiến." },
+    { img: "keophao", p: [30.95, 3.55, -5.5], r: -Math.PI / 2, date: "1954", text: "Kéo pháo vào trận địa Điện Biên Phủ: sức mạnh của nhân dân." },
+    { img: "dbp", p: [30.95, 3.55, 2], r: -Math.PI / 2, date: "7/5/1954", text: "Bộ đội cắm cờ trên sở chỉ huy của Pháp vừa bị chiếm, Điện Biên Phủ. Ảnh: Quân đội Nhân dân Việt Nam." },
+    { img: "geneva", p: [30.95, 3.55, 9.5], r: -Math.PI / 2, date: "21/7/1954", text: "Phiên họp toàn thể cuối cùng về Đông Dương, Hội nghị Giơnevơ: vừa đánh vừa đàm." },
+  ];
+  const TITLES = { badinh: "Lễ Độc lập ở Ba Đình", famine: "Nạn đói năm 1945", sobo: "Hiệp định Sơ bộ", moutet: "Tạm ước 14/9", tuve: "Toàn quốc kháng chiến", keophao: "Kéo pháo vào trận địa", dbp: "Chiến thắng Điện Biên Phủ", geneva: "Hiệp định Giơnevơ" };
+
+  const canvas = document.getElementById("view");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 700);
+  const EYE = 1.65, START = { x: 0, y: 0, z: 78, yaw: 0 };
+  const feet = new THREE.Vector3(START.x, START.y, START.z);
+  camera.position.set(feet.x, feet.y + EYE, feet.z);
+  let yaw = 0, pitch = 0.02;
+  const RH = 5.2; // bamboo spotlight height above its floor
+  // text as canvas textures, drawn once the fonts are in
+  function textPanel(w, h, draw, pxPerM = 340) {
+    const c = document.createElement("canvas"); c.width = Math.round(w * pxPerM); c.height = Math.round(h * pxPerM);
+    const g = c.getContext("2d"); draw(g, c.width, c.height);
+    const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
+    return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+  }
+  function wrap(g, text, x, y, maxW, lh) {
+    const words = text.split(" "); let line = "";
+    for (const w of words) { const t = line ? line + " " + w : w; if (g.measureText(t).width > maxW && line) { g.fillText(line, x, y); y += lh; line = w; } else line = t; }
+    if (line) g.fillText(line, x, y); return y;
+  }
+
+  const loader = new THREE.TextureLoader();
+  const exhibitSpots = [];
+  const clickables = [];
+  function hangExhibit(e) {
+    const f = { p: new THREE.Vector3(...e.p), r: e.r };
+    const group = new THREE.Group(); group.position.copy(f.p); group.rotation.y = f.r; scene.add(group);
+    loader.load("img/" + e.img + ".jpg", (tex) => {
+      tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
+      const aspect = tex.image.width / tex.image.height;
+      const h = aspect > 1.2 ? 2.1 : 2.5, w = Math.min(h * aspect, 3.6);
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.16, h + 0.16, 0.05), new THREE.MeshStandardMaterial({ color: COL.culmDark, roughness: 0.6, metalness: 0.2 }));
+      frame.position.z = 0.03; group.add(frame);
+      const photo = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 }));
+      photo.position.z = 0.06; group.add(photo);
+      photo.userData.ex = e; frame.userData.ex = e; clickables.push(photo, frame);
+    });
+    const label = textPanel(1.5, 0.62, (g, W, H) => {
+      g.fillStyle = "rgba(239,232,213,0.96)"; g.fillRect(0, 0, W, H);
+      g.fillStyle = COL.son; g.font = `900 ${H * 0.25}px "Big Shoulders Display", sans-serif`; g.fillText(e.date, W * 0.06, H * 0.3);
+      g.fillStyle = "#1b2b20"; g.font = `500 ${H * 0.095}px "Be Vietnam Pro", sans-serif`;
+      wrap(g, e.text, W * 0.06, H * 0.48, W * 0.88, H * 0.125);
+    });
+    label.position.set(0, -1.62, 0.04); group.add(label);
+    exhibitSpots.push({ e, pos: f.p.clone() });
+  }
+  // the bamboo: a fixed root on a plinth, culm and branches swaying above it
+  const bamboo = new THREE.Group();
+  const leaves = [];
+  function buildBamboo() {
+    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.4, 0.4, 40), new THREE.MeshStandardMaterial({ color: 0x0f2a1d, roughness: 0.9 }));
+    plinth.position.y = 0.2; bambooRoot.add(plinth);
+    const soil = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.02, 40), new THREE.MeshStandardMaterial({ color: 0x2a1d10 }));
+    soil.position.y = 0.41; bambooRoot.add(soil);
+    bamboo.position.y = 0.42; bambooRoot.add(bamboo);
+
+    // stripe texture: matte gold with the đằng ngà green stripe and a hard shade band
+    const c = document.createElement("canvas"); c.width = 256; c.height = 8; const g = c.getContext("2d");
+    g.fillStyle = COL.culm; g.fillRect(0, 0, 256, 8);
+    g.fillStyle = COL.culmDark; g.fillRect(170, 0, 86, 8);
+    g.fillStyle = "#4f7d3b"; g.fillRect(60, 0, 18, 8);
+    const stripe = new THREE.CanvasTexture(c); stripe.encoding = THREE.sRGBEncoding;
+    const culmMat = new THREE.MeshStandardMaterial({ map: stripe, roughness: 0.55 });
+    const nodeMat = new THREE.MeshStandardMaterial({ color: 0xf1d987, roughness: 0.5 });
+    const leafShape = new THREE.Shape();
+    leafShape.moveTo(0, 0); leafShape.bezierCurveTo(0.12, 0.05, 0.42, 0.04, 0.62, 0); leafShape.bezierCurveTo(0.42, -0.04, 0.12, -0.05, 0, 0);
+    const leafGeo = new THREE.ShapeGeometry(leafShape);
+    const leafMats = [0x79a85f, 0x5c9150, 0x3f7348].map((col) => new THREE.MeshStandardMaterial({ color: col, side: THREE.DoubleSide, roughness: 0.7 }));
+
+    const N = 11; let y = 0;
+    for (let k = 0; k < N; k++) {
+      const len = 0.3 + k * 0.03, r0 = 0.2 - k * 0.008, r1 = 0.2 - (k + 1) * 0.008;
+      const seg = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, len, 20, 1, true), culmMat);
+      seg.position.y = y + len / 2; seg.rotation.y = k * 1.7; bamboo.add(seg);
+      y += len;
+      const node = new THREE.Mesh(new THREE.TorusGeometry(r1 + 0.005, 0.018, 6, 24), nodeMat);
+      node.rotation.x = Math.PI / 2; node.position.y = y; bamboo.add(node);
+      if (k >= 3) {
+        // branches alternate sides and carry fans of drooping leaves
+        const side = k % 2 ? 1 : -1, branch = new THREE.Group();
+        branch.position.y = y; branch.rotation.y = k * 2.1; bamboo.add(branch);
+        const twig = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.014, 0.7, 6), new THREE.MeshStandardMaterial({ color: COL.culmDark }));
+        twig.rotation.z = side * 1.05; twig.position.set(side * 0.3, 0.17, 0); branch.add(twig);
+        for (let q = 0; q < 7; q++) {
+          const lf = new THREE.Mesh(leafGeo, leafMats[q % 3]);
+          lf.position.set(side * (0.42 + (q % 3) * 0.12), 0.24 + (q % 2) * 0.05, (q - 3) * 0.06);
+          lf.rotation.set((q - 3) * 0.3, side > 0 ? 0 : Math.PI, -0.5 - (q % 4) * 0.18);
+          lf.scale.setScalar(0.9 + (q % 3) * 0.15);
+          branch.add(lf); leaves.push({ m: lf, base: lf.rotation.z, ph: k + q });
+        }
+      }
+    }
+    // tip whip with a top fan
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.6, 12), culmMat); tip.position.y = y + 0.3; bamboo.add(tip);
+    for (let q = 0; q < 6; q++) {
+      const lf = new THREE.Mesh(leafGeo, leafMats[q % 3]); lf.position.y = y + 0.55;
+      lf.rotation.set(0, q * 1.05, -0.9 - (q % 2) * 0.3); bamboo.add(lf); leaves.push({ m: lf, base: lf.rotation.z, ph: 20 + q });
+    }
+    const top = new THREE.SpotLight(0xfff0c8, 1.2, 10, 0.5, 0.7, 1.2);
+    top.position.set(0, RH - 0.1, 1.5); top.target = plinth; bambooRoot.add(top);
+
+    // plaque in front of the plinth, facing the entrance
+    const plaque = textPanel(2.6, 0.9, (g, W, H) => {
+      g.fillStyle = "rgba(239,232,213,0.96)"; g.fillRect(0, 0, W, H);
+      g.textAlign = "center"; g.fillStyle = "#1b2b20"; g.font = `900 ${H * 0.15}px "Big Shoulders Display", sans-serif`;
+      g.fillText("GỐC VỮNG · THÂN CHẮC · CÀNH UYỂN CHUYỂN", W / 2, H * 0.33);
+      g.font = `500 ${H * 0.068}px "Be Vietnam Pro", sans-serif`;
+      g.fillText("Gốc là độc lập, chủ quyền: không lay. Cành là cách ứng xử: mềm, nghiêng theo gió.", W / 2, H * 0.58);
+      g.fillStyle = "#8a6a1f"; g.fillText("Ngoại giao cây tre Việt Nam · Hội nghị Đối ngoại toàn quốc, 12/2021", W / 2, H * 0.8);
+    });
+    plaque.position.set(0, 0.62, 1.85); plaque.rotation.x = -0.55; plaque.scale.setScalar(0.8); bambooRoot.add(plaque);
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.8, 0.06), new THREE.MeshStandardMaterial({ color: COL.culmDark }));
+    stand.position.set(0, 0.25, 1.9); stand.scale.y = 0.6; bambooRoot.add(stand);
+  }
+  // ---------- the citadel ----------
+  // Moat, walls, the gate, a courtyard, the main hall (lobby + 1946 room) and two side halls (1945, 1951–1954).
+  const obstacles = [];       // round no-go zones (plinth, urns)
+  const bambooRoot = new THREE.Group();
+  let flagGeo, flagBase, signs;
+  function buildWorld() {
+  scene.background = new THREE.Color(0xa9c1b4);
+  scene.fog = new THREE.Fog(0xa9c1b4, 120, 320);
+  scene.add(new THREE.HemisphereLight(0xeaf2e0, 0x4a3a24, 0.6));
+  const sun = new THREE.DirectionalLight(0xfff0d4, 1.25); sun.position.set(-50, 70, 60); sun.castShadow = true;
+  sun.shadow.mapSize.set(4096, 4096); Object.assign(sun.shadow.camera, { left: -85, right: 85, top: 85, bottom: -85, near: 1, far: 250 }); sun.shadow.bias = -0.0006;
+  scene.add(sun);
+  const M = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8 }, o));
+  function tex(base, draw, rx = 1, ry = rx) {
+    const c = document.createElement("canvas"); c.width = c.height = 512; const x = c.getContext("2d");
+    x.fillStyle = base; x.fillRect(0, 0, 512, 512); draw(x);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 8; return t;
+  }
+  let sd = 5; const rnd = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+  const brickDraw = (x) => { x.strokeStyle = "#6e3020"; x.lineWidth = 3; for (let i = 0; i < 512; i += 32) { x.beginPath(); x.moveTo(0, i); x.lineTo(512, i); x.stroke(); for (let j = (i / 32) % 2 * 32; j < 512; j += 64) { x.beginPath(); x.moveTo(j, i); x.lineTo(j, i + 32); x.stroke(); } } };
+  const stoneDraw = (x) => { x.strokeStyle = "#6a655a"; x.lineWidth = 3; for (let i = 0; i < 512; i += 64) { x.beginPath(); x.moveTo(0, i); x.lineTo(512, i); x.stroke(); for (let j = (i / 64) % 2 * 64; j < 512; j += 128) { x.beginPath(); x.moveTo(j, i); x.lineTo(j, i + 64); x.stroke(); } } for (let i = 0; i < 900; i++) { x.fillStyle = rnd() > 0.5 ? "#a39e90" : "#7c776a"; x.globalAlpha = 0.35; x.fillRect(rnd() * 512, rnd() * 512, 6, 6); } x.globalAlpha = 1; };
+  const brick = tex("#9c4a32", brickDraw, 2, 30);
+  const grass = tex("#4c6b34", (x) => { for (let i = 0; i < 4000; i++) { x.fillStyle = ["#3e5c2a", "#5d7f40", "#557538"][i % 3]; x.globalAlpha = 0.5; x.fillRect(rnd() * 512, rnd() * 512, 3, 5); } x.globalAlpha = 1; }, 40);
+  const tiles = tex("#7a3424", (x) => { for (let r = 0; r < 512; r += 24) { x.fillStyle = "#5e2519"; x.fillRect(0, r + 18, 512, 6); for (let c = (r / 24) % 2 * 16; c < 512; c += 32) { x.fillStyle = "#8c3e2b"; x.fillRect(c, r, 28, 18); } } }, 4);
+  const yardStone = tex("#a29d8e", stoneDraw, 14, 14);
+  const wallStone = tex("#8a8475", stoneDraw, 1, 1);
+  const wood = tex("#6a3a22", (x) => { for (let i = 0; i < 512; i += 10) { x.fillStyle = i % 20 ? "#5e321d" : "#73422a"; x.fillRect(i, 0, 9, 512); } }, 3);
+  const woodFloor = (a, b) => { const t = wood.clone(); t.needsUpdate = true; t.repeat.set(a, b); return M(0xffffff, { map: t }); };
+  const water = M(0x2f6f7a, { roughness: 0.15, metalness: 0.3 });
+
+  const add = (m, x = 0, y = 0, z = 0, shadow = true) => { m.position.set(x, y, z); if (shadow) { m.castShadow = m.receiveShadow = true; } scene.add(m); return m; };
+  // a box whose stone texture repeats by world size, so long walls don't stretch
+  const stoneBox = (w, h, d, x, y, z, base = wallStone) => {
+    const mats = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]].map(([a, b]) => { const t = base.clone(); t.needsUpdate = true; t.repeat.set(a / 6, b / 6); return M(0xffffff, { map: t }); });
+    return add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats), x, y + h / 2, z);
+  };
+  const boxM = (w, h, d, mat, x, y, z) => add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat), x, y + h / 2, z);
+  const plane = (w, d, mat, x, y, z) => { const p = add(new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat), x, y, z); p.rotation.x = -Math.PI / 2; p.castShadow = false; return p; };
+
+  // a curved Vietnamese hip roof whose eave corners turn up into đao
+  const tileMat = M(0xffffff, { map: tiles, roughness: 0.7, side: THREE.DoubleSide });
+  function roof(w, d, h, ridge, lift) {
+    const seg = 18, pos = [], idx = [], uv = [];
+    const P = (u, v, side) => {
+      const yy = h * Math.pow(v, 0.85) + lift * Math.pow(Math.abs(u), 3) * Math.pow(1 - v, 1.6) - 0.25 * h * v * (1 - v);
+      if (side < 2) { const s = side === 0 ? 1 : -1; return [u * ((w / 2) * (1 - v) + ridge * v), yy, s * (d / 2) * (1 - v)]; }
+      const s = side === 2 ? 1 : -1; return [s * ((w / 2) * (1 - v) + ridge * v), yy, u * (d / 2) * (1 - v)];
+    };
+    for (let side = 0; side < 4; side++) {
+      const base = pos.length / 3;
+      for (let j = 0; j <= seg; j++) for (let i = 0; i <= seg; i++) { const u = -1 + (2 * i) / seg, v = j / seg; pos.push(...P(u, v, side)); uv.push(i / seg * (side < 2 ? w : d) / 2, j / seg * 3); }
+      for (let j = 0; j < seg; j++) for (let i = 0; i < seg; i++) { const a = base + j * (seg + 1) + i, b = a + 1, c = a + seg + 1, e = c + 1; idx.push(a, b, e, a, e, c); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    return new THREE.Mesh(g, tileMat);
+  }
+  const lacquer = M(0x8a2a1a, { roughness: 0.45 });
+  const gold = M(0xd8b24a, { metalness: 0.5, roughness: 0.35 });
+  const woodMat = M(0xffffff, { map: wood, roughness: 0.6 });
+  // a row of lacquered columns on stone bases
+  function cols(x0, x1, n, z, y, h, r = 0.35, skipMid = false) {
+    for (let i = 0; i < n; i++) {
+      const x = n === 1 ? x0 : x0 + ((x1 - x0) * i) / (n - 1);
+      if (skipMid && Math.abs(x - (x0 + x1) / 2) < 0.1) continue;
+      add(new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.08, h, 16), lacquer), x, y + h / 2, z);
+      add(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.6, r * 1.8, 0.35, 12), M(0x9a9586)), x, y + 0.17, z);
+    }
+  }
+  function ridgeTop(x, y, z, len, rotY = 0) {
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rotY; scene.add(g);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(len, 0.45, 0.6), M(0x5e2519)); b.castShadow = true; g.add(b);
+    for (const s of [-1, 1]) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.6, 8), gold); f.position.set(s * len / 2, 0.7, 0); f.rotation.z = -s * 0.55; g.add(f); }
+    const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 12), gold); pearl.position.y = 0.8; g.add(pearl);
+  }
+  function sign(l1, l2, w, h) {
+    const c = document.createElement("canvas"); c.width = 1024; c.height = 256; const x = c.getContext("2d");
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+    const draw = () => { x.fillStyle = "#2a1208"; x.fillRect(0, 0, 1024, 256); x.strokeStyle = "#d8b24a"; x.lineWidth = 10; x.strokeRect(14, 14, 996, 228); x.fillStyle = "#e9c55a"; x.textAlign = "center"; x.font = '900 112px "Big Shoulders Display", sans-serif'; x.fillText(l1, 512, l2 ? 140 : 165); if (l2) { x.font = '500 40px "Be Vietnam Pro", sans-serif'; x.fillText(l2, 512, 205); } t.needsUpdate = true; };
+    signs.push(draw);
+    return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, roughness: 0.5 }));
+  }
+  signs = [];
+
+  // ── site: outer ground, moat, island ──
+  const MO = { x: 54, zf: 40, zb: -58 }, IS = { x: 47, zf: 33, zb: -51 };
+  const outer = new THREE.Shape([[-200, -200], [200, -200], [200, 200], [-200, 200]].map(([a, b]) => new THREE.Vector2(a, b)));
+  outer.holes.push(new THREE.Path([[-MO.x, -MO.zf], [MO.x, -MO.zf], [MO.x, -MO.zb], [-MO.x, -MO.zb]].map(([a, b]) => new THREE.Vector2(a, b))));
+  const og = add(new THREE.Mesh(new THREE.ShapeGeometry(outer), M(0xffffff, { map: grass })), 0, 0, 0); og.rotation.x = -Math.PI / 2; og.castShadow = false;
+  grass.repeat.set(0.1, 0.1);
+  const iw = IS.x * 2, id = IS.zf - IS.zb, icz = (IS.zf + IS.zb) / 2;
+  stoneBox(iw, 2, id, 0, -2, icz);
+  plane(iw, id, M(0xffffff, { map: (() => { const g = grass.clone(); g.needsUpdate = true; g.repeat.set(9, 8); return g; })() }), 0, 0.01, icz);
+  plane(MO.x * 2, MO.zf - MO.zb, water, 0, -1.3, (MO.zf + MO.zb) / 2).userData.water = true;
+  // outer moat banks
+  stoneBox(MO.x * 2, 2, 1, 0, -2, MO.zf + 0.5); stoneBox(MO.x * 2, 2, 1, 0, -2, MO.zb - 0.5);
+  stoneBox(1, 2, MO.zf - MO.zb, -MO.x - 0.5, -2, (MO.zf + MO.zb) / 2); stoneBox(1, 2, MO.zf - MO.zb, MO.x + 0.5, -2, (MO.zf + MO.zb) / 2);
+
+  // ── citadel walls with merlons and corner bastions ──
+  const W = { x: 40, zf: 25, zb: -45, h: 7, t: 3 };
+  stoneBox(W.x - 15, W.h, W.t, -(15 + (W.x - 15) / 2), 0, W.zf);
+  stoneBox(W.x - 15, W.h, W.t, 15 + (W.x - 15) / 2, 0, W.zf);
+  stoneBox(W.x * 2, W.h, W.t, 0, 0, W.zb);
+  stoneBox(W.t, W.h, W.zf - W.zb, -W.x, 0, (W.zf + W.zb) / 2);
+  stoneBox(W.t, W.h, W.zf - W.zb, W.x, 0, (W.zf + W.zb) / 2);
+  const merlonSpots = [];
+  const runX = (x0, x1, z, y) => { for (let x = x0; x <= x1; x += 2) merlonSpots.push([x, y, z]); };
+  const runZ = (z0, z1, x, y) => { for (let z = z0; z <= z1; z += 2) merlonSpots.push([x, y, z]); };
+  runX(-W.x, -15, W.zf + 1.2, W.h); runX(15, W.x, W.zf + 1.2, W.h); runX(-W.x, W.x, W.zb - 1.2, W.h);
+  runZ(W.zb, W.zf, -W.x - 1.2, W.h); runZ(W.zb, W.zf, W.x + 1.2, W.h);
+  // bastions at the corners, each with a small pavilion
+  const towers = [[-W.x, W.zf], [W.x, W.zf], [-W.x, W.zb], [W.x, W.zb]];
+  towers.forEach(([x, z]) => {
+    stoneBox(10, 9.5, 10, x, 0, z);
+    for (let k = -2; k <= 2; k++) { merlonSpots.push([x + k * 2, 9.5, z + 4.6], [x + k * 2, 9.5, z - 4.6], [x + 4.6, 9.5, z + k * 2], [x - 4.6, 9.5, z + k * 2]); }
+    boxM(4.4, 2.8, 4.4, woodMat, x, 9.5, z);
+    add(roof(7.5, 7.5, 2.6, 0.4, 1.0), x, 12.3, z);
+  });
+
+  // ── the great gate: three arches, a two-storey pavilion on top ──
+  const G = { w: 32, h: 8.5, d: 10 };
+  const gs = new THREE.Shape([new THREE.Vector2(-G.w / 2, 0), new THREE.Vector2(G.w / 2, 0), new THREE.Vector2(G.w / 2, G.h), new THREE.Vector2(-G.w / 2, G.h)]);
+  [[0, 5, 6.2], [-8.5, 3.6, 4.8], [8.5, 3.6, 4.8]].forEach(([cx, aw, ah]) => {
+    const p = new THREE.Path(); const hs = ah - aw / 2;
+    p.moveTo(cx - aw / 2, 0); p.lineTo(cx - aw / 2, hs); p.absarc(cx, hs, aw / 2, Math.PI, 0, true); p.lineTo(cx + aw / 2, 0); p.lineTo(cx - aw / 2, 0);
+    gs.holes.push(p);
+  });
+  const gTex = wallStone.clone(); gTex.needsUpdate = true; gTex.repeat.set(1 / 6, 1 / 6);
+  add(new THREE.Mesh(new THREE.ExtrudeGeometry(gs, { depth: G.d, bevelEnabled: false }), M(0xffffff, { map: gTex })), 0, 0, W.zf - G.d / 2);
+  runX(-G.w / 2, G.w / 2, W.zf + G.d / 2 - 0.4, G.h);
+  add(sign("BẢO TÀNG CÂY TRE", "1945 – 1954 · Dĩ bất biến, ứng vạn biến", 7.2, 1.8), 0, 7.35, W.zf + G.d / 2 + 0.02, false);
+  // gate pavilion
+  const gy = G.h, gz = W.zf;
+  boxM(24, 0.6, 8.5, M(0x9a9586), 0, gy, gz);
+  boxM(20, 4.2, 5.6, woodMat, 0, gy + 0.6, gz);
+  cols(-10.8, 10.8, 9, gz + 3.6, gy + 0.6, 4.2, 0.3); cols(-10.8, 10.8, 9, gz - 3.6, gy + 0.6, 4.2, 0.3);
+  add(roof(27, 11.5, 2.8, 7, 1.3), 0, gy + 4.8, gz);
+  boxM(15, 2.0, 5.2, woodMat, 0, gy + 6.4, gz);
+  add(roof(19, 8.5, 2.9, 5, 1.1), 0, gy + 8.4, gz);
+  ridgeTop(0, gy + 11.4, gz, 10);
+  // side wings of the gate pavilion
+  for (const s of [-1, 1]) { boxM(4.5, 3, 4.5, woodMat, s * 13.3, gy, gz); add(roof(7, 7, 2.2, 0.6, 0.9), s * 13.3, gy + 3, gz); }
+
+  // bridge over the moat
+  boxM(8, 0.8, MO.zf - IS.zf + 2, M(0xffffff, { map: (() => { const t = wallStone.clone(); t.needsUpdate = true; t.repeat.set(1.3, 1.5); return t; })() }), 0, -0.6, (MO.zf + IS.zf) / 2);
+  for (const s of [-1, 1]) boxM(0.5, 1.0, MO.zf - IS.zf + 2, M(0x9a9586), s * 3.8, 0.2, (MO.zf + IS.zf) / 2);
+  // approach path outside, axis path inside
+  plane(8, 30, M(0xffffff, { map: brick }), 0, 0.02, MO.zf + 16);
+  const inside = W.zf - W.zb - W.t;
+  plane(W.x * 2 - W.t, inside, M(0xffffff, { map: yardStone }), 0, 0.02, (W.zf + W.zb) / 2);
+  const axis = brick.clone(); axis.needsUpdate = true; axis.repeat.set(2, 20);
+  plane(8, 36, M(0xffffff, { map: axis }), 0, 0.03, 2);
+  plane(8, IS.zf - W.zf - G.d / 2 + 1, M(0xffffff, { map: brick }), 0, 0.03, (IS.zf + W.zf + G.d / 2) / 2);
+
+  // ── main hall: three terraces, three roofs ──
+  const HZ = -24;
+  stoneBox(52, 1.3, 30, 0, 0, HZ, yardStone); stoneBox(47, 1.3, 26, 0, 1.3, HZ, yardStone); stoneBox(42, 1.3, 22, 0, 2.6, HZ, yardStone);
+  // stairs as full-height blocks so the walker can climb them; they run up to the top terrace
+  for (let i = 0; i < 12; i++) boxM(12, (i + 1) * 0.33, 0.85, M(0x9a9586), 0, 0, HZ + 11 + 0.85 * (11 - i) + 0.425);
+  for (const s of [-1, 1]) { const rail = boxM(0.8, 1.0, 10.6, M(0xb0aa9a), s * 6.4, 0, HZ + 16.1); rail.rotation.x = 0.37; rail.position.y = 2.5; }
+  const ty = 3.9;
+  // hollow hall: outer wood walls, plaster lining, a partition between the lobby and the 1946 room
+  const plaster = M(0xe9e0c8, { roughness: 0.9 });
+  boxM(34, 6.5, 0.4, woodMat, 0, ty, HZ - 7.8); boxM(0.4, 6.5, 16, woodMat, -16.8, ty, HZ); boxM(0.4, 6.5, 16, woodMat, 16.8, ty, HZ);
+  boxM(14.5, 6.5, 0.4, woodMat, -9.75, ty, HZ + 7.8); boxM(14.5, 6.5, 0.4, woodMat, 9.75, ty, HZ + 7.8); boxM(5, 1.7, 0.4, woodMat, 0, ty + 4.8, HZ + 7.8);
+  boxM(33.2, 6.2, 0.1, plaster, 0, ty, HZ - 7.55); boxM(0.1, 6.2, 15.2, plaster, -16.55, ty, HZ); boxM(0.1, 6.2, 15.2, plaster, 16.55, ty, HZ);
+  boxM(14.3, 6.2, 0.1, plaster, -9.75, ty, HZ + 7.55); boxM(14.3, 6.2, 0.1, plaster, 9.75, ty, HZ + 7.55);
+  boxM(13.6, 6.2, 0.3, plaster, -10.2, ty, HZ - 1); boxM(13.6, 6.2, 0.3, plaster, 10.2, ty, HZ - 1); boxM(6.8, 1.6, 0.3, plaster, 0, ty + 4.6, HZ - 1);
+  plane(33.2, 15.2, woodFloor(10, 5), 0, ty + 0.02, HZ);
+  boxM(33.6, 0.3, 15.6, M(0x4a2a18), 0, ty + 6.2, HZ);
+  for (let i = -5; i <= 5; i++) boxM(0.35, 0.35, 15.2, lacquer, i * 3, ty + 5.85, HZ);
+  // skylight over the great bamboo
+  const BZ = HZ + 3.2;
+  const sky = add(new THREE.Mesh(new THREE.CircleGeometry(2.2, 32), new THREE.MeshBasicMaterial({ color: 0xfff6dc })), 0, ty + 6.03, BZ, false); sky.rotation.x = Math.PI / 2;
+  [[0, HZ + 4, 0.8], [0, HZ - 4.5, 0.7]].forEach(([x, z, i]) => { const l = new THREE.PointLight(0xffe6c0, i, 24, 1.4); l.position.set(x, ty + 5, z); scene.add(l); });
+  bambooRoot.position.set(0, ty, BZ); scene.add(bambooRoot); obstacles.push({ x: 0, z: BZ, r: 1.9, y: ty });
+  // "today" panels on the lobby side walls
+  [[-1, "NGOẠI GIAO CÂY TRE", "Gốc vững, thân chắc, cành uyển chuyển: giữ vững độc lập, chủ quyền, mềm dẻo trong cách ứng xử. Hội nghị Đối ngoại toàn quốc, 12/2021."],
+   [1, "HÔM NAY", "Chính sách quốc phòng “bốn không”. Giải quyết tranh chấp trên Biển Đông bằng biện pháp hòa bình, theo luật pháp quốc tế và UNCLOS 1982."]].forEach(([s, h, txt]) => {
+    const m = textPanel(4.4, 2.4, (g, W, H) => {
+      g.fillStyle = "rgba(22,56,40,0.96)"; g.fillRect(0, 0, W, H);
+      g.fillStyle = COL.culm; g.font = `900 ${H * 0.16}px "Big Shoulders Display", sans-serif`; g.fillText(h, W * 0.07, H * 0.24);
+      g.fillStyle = COL.paper; g.font = `500 ${H * 0.068}px "Be Vietnam Pro", sans-serif`; wrap(g, txt, W * 0.07, H * 0.42, W * 0.86, H * 0.1);
+    });
+    m.position.set(s * 16.48, ty + 2.6, BZ); m.rotation.y = -s * Math.PI / 2; scene.add(m);
+  });
+  const p1 = sign("DĨ BẤT BIẾN", "Giữ nguyên mục tiêu", 4.4, 1.1); p1.position.set(-9, ty + 3.4, HZ - 0.83); scene.add(p1);
+  const p2 = sign("ỨNG VẠN BIẾN", "Linh hoạt cách làm", 4.4, 1.1); p2.position.set(9, ty + 3.4, HZ - 0.83); scene.add(p2);
+  const p3 = sign("1946 · HÒA ĐỂ TIẾN", "", 3.6, 0.9); p3.position.set(0, ty + 5.4, HZ - 0.83); scene.add(p3);
+  cols(-18, 18, 11, HZ + 9.5, ty, 6.5, 0.42, true); cols(-18, 18, 11, HZ - 9.5, ty, 6.5, 0.42);
+  // the front doors stand open
+  for (const s of [-1, 1]) { const leaf = new THREE.Mesh(new THREE.BoxGeometry(2.5, 4.8, 0.12).translate(-s * 1.25, 2.4, 0), M(0x4a2414, { roughness: 0.5 })); leaf.castShadow = true; add(leaf, s * 2.5, ty, HZ + 8.1).rotation.y = s * 1.25; }
+  for (const x of [-12, -7, 7, 12]) { boxM(3, 2.4, 0.1, M(0x2a1a10), x, ty + 2, HZ + 8.06); for (let k = -4; k <= 4; k++) boxM(0.07, 2.4, 0.14, M(0xb08a4a), x + k * 0.33, ty + 2, HZ + 8.1); }
+  add(sign("BẢO TÀNG CÂY TRE", "", 6.4, 1.6), 0, ty + 5.6, HZ + 8.1, false);
+  add(roof(42, 24, 3.8, 11, 1.8), 0, ty + 6.5, HZ);
+  boxM(27, 2.6, 12, woodMat, 0, ty + 8.6, HZ);
+  add(roof(33, 18, 3.5, 8, 1.5), 0, ty + 11.2, HZ);
+  boxM(19, 2.4, 8, woodMat, 0, ty + 13.4, HZ);
+  add(roof(24, 13, 3.8, 5.5, 1.2), 0, ty + 15.8, HZ);
+  ridgeTop(0, ty + 19.6, HZ, 11.5);
+
+  // ── side halls: hollow, a door on the courtyard side, steps up to it ──
+  for (const s of [-1, 1]) {
+    const x = s * 27, z = 2, fy = 1.2, ox = x + s * 4.3, ix = x - s * 4.3;
+    stoneBox(13, fy, 28, x, 0, z, yardStone);
+    for (let i = 0; i < 4; i++) boxM(0.7, (i + 1) * 0.3, 5, M(0x9a9586), x - s * (6.85 + 0.7 * (3 - i)), 0, z);
+    boxM(0.4, 5, 24, woodMat, ox, fy, z);
+    boxM(0.4, 5, 10.5, woodMat, ix, fy, z - 6.75); boxM(0.4, 5, 10.5, woodMat, ix, fy, z + 6.75); boxM(0.4, 1.4, 3, woodMat, ix, fy + 3.6, z);
+    boxM(9, 5, 0.4, woodMat, x, fy, z - 11.8); boxM(9, 5, 0.4, woodMat, x, fy, z + 11.8);
+    boxM(0.1, 4.8, 23.2, plaster, ox - s * 0.25, fy, z);
+    boxM(0.1, 4.8, 10.3, plaster, ix + s * 0.25, fy, z - 6.75); boxM(0.1, 4.8, 10.3, plaster, ix + s * 0.25, fy, z + 6.75);
+    boxM(8.2, 4.8, 0.1, plaster, x, fy, z - 11.55); boxM(8.2, 4.8, 0.1, plaster, x, fy, z + 11.55);
+    plane(8.2, 23.2, woodFloor(4, 10), x, fy + 0.02, z);
+    boxM(8.6, 0.2, 23.6, M(0x4a2a18), x, fy + 4.8, z);
+    for (let i = -3; i <= 3; i++) boxM(8.2, 0.3, 0.3, lacquer, x, fy + 4.5, z + i * 3.4);
+    for (let i = 0; i < 9; i++) { if (i === 4) continue; const zz = z - 12.5 + i * 3.125; add(new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.32, 5, 14), lacquer), x - s * 5.4, 3.7, zz); }
+    add(roof(14, 29, 3, 0.6, 1.2), x, 6.2, z);
+    boxM(6, 1.5, 18, woodMat, x, 8.4, z);
+    add(roof(10, 22, 2.6, 0.4, 1.0), x, 9.9, z);
+    ridgeTop(x, 12.5, z, 21, Math.PI / 2);
+    add(sign(s < 0 ? "1945" : "1951 – 1954", "", 3.2, 0.8), ix - s * 0.22, fy + 4.15, z, false).rotation.y = -s * Math.PI / 2;
+    add(sign(s < 0 ? "1945" : "1951 – 1954", s < 0 ? "Ngàn cân treo sợi tóc" : "Đến thắng lợi", 5, 1.25), ox - s * 0.32, fy + 4.0, z, false).rotation.y = -s * Math.PI / 2;
+    const l = new THREE.PointLight(0xffe6c0, 0.9, 26, 1.4); l.position.set(x, fy + 4, z); scene.add(l);
+  }
+  // bronze urns along the axis
+  const urnGeo = new THREE.LatheGeometry([[0, 0], [0.9, 0.1], [1.4, 0.7], [1.5, 1.2], [1.3, 1.7], [1.45, 1.8], [0, 1.8]].map(([a, b]) => new THREE.Vector2(a, b)), 24);
+  for (const z of [-2, 10]) for (const s of [-1, 1]) { add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.8, 2.6), M(0x9a9586)), s * 8, 0.4, z); add(new THREE.Mesh(urnGeo, M(0x5a4a2a, { metalness: 0.7, roughness: 0.4 })), s * 8, 0.8, z); obstacles.push({ x: s * 8, z, r: 1.9, y: 0 }); }
+
+  // ── flag tower outside the moat ──
+  const FX = -26, FZ = 52;
+  stoneBox(14, 2.4, 14, FX, 0, FZ); stoneBox(11, 2.4, 11, FX, 2.4, FZ); stoneBox(8, 2.4, 8, FX, 4.8, FZ);
+  add(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, 22, 12), M(0xc9c3b4, { metalness: 0.5 })), FX, 7.2 + 11, FZ);
+  const fc = document.createElement("canvas"); fc.width = 300; fc.height = 200; const fx = fc.getContext("2d");
+  fx.fillStyle = "#c8251d"; fx.fillRect(0, 0, 300, 200); fx.fillStyle = "#f3cf2f"; fx.beginPath();
+  for (let i = 0; i < 10; i++) { const r = i % 2 ? 26 : 66, a = -Math.PI / 2 + i * Math.PI / 5; fx.lineTo(150 + r * Math.cos(a), 100 + r * Math.sin(a)); } fx.fill();
+  const ftex = new THREE.CanvasTexture(fc); ftex.encoding = THREE.sRGBEncoding;
+  flagGeo = new THREE.PlaneGeometry(6, 4, 24, 12); flagBase = flagGeo.attributes.position.array.slice();
+  add(new THREE.Mesh(flagGeo, new THREE.MeshStandardMaterial({ map: ftex, side: THREE.DoubleSide })), FX + 3.1, 26.6, FZ).userData.ghost = true;
+
+  // merlons, all instanced
+  const mer = new THREE.InstancedMesh(new THREE.BoxGeometry(1.1, 1.0, 0.7), M(0x8a8475), merlonSpots.length);
+  const o = new THREE.Object3D();
+  merlonSpots.forEach(([x, y, z], i) => { o.position.set(x, y + 0.5, z); o.rotation.set(0, 0, 0); o.scale.set(1, 1, 1); o.updateMatrix(); mer.setMatrixAt(i, o.matrix); });
+  mer.castShadow = true; scene.add(mer);
+
+  // ── lũy tre around the moat ──
+  const spots = [];
+  for (let i = 0; i < 900 && spots.length < 620; i++) {
+    const x = (rnd() * 2 - 1) * 90, z = -90 + rnd() * 165;
+    const outsideMoat = Math.abs(x) > MO.x + 4 || z < MO.zb - 4 || z > MO.zf + 4;
+    const nearRing = Math.abs(x) < MO.x + 22 && z > MO.zb - 22 && z < MO.zf + 26;
+    const clearFront = Math.abs(x) < 14 && z > MO.zf;
+    const clearFlag = Math.hypot(x - FX, z - FZ) < 12;
+    if (outsideMoat && nearRing && !clearFront && !clearFlag) spots.push([x, z]);
+  }
+  const culmGeo = new THREE.CylinderGeometry(0.08, 0.13, 1, 7); culmGeo.translate(0, 0.5, 0);
+  const culms = new THREE.InstancedMesh(culmGeo, M(0xb8a24a, { roughness: 0.5 }), spots.length);
+  const clumps = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M(0x4f7d3b, { roughness: 0.9, flatShading: true }), spots.length * 2);
+  spots.forEach(([x, z], i) => {
+    const h = 8 + rnd() * 7;
+    o.position.set(x, 0, z); o.rotation.set((rnd() - 0.5) * 0.25, 0, (rnd() - 0.5) * 0.25); o.scale.set(1, h, 1); o.updateMatrix(); culms.setMatrixAt(i, o.matrix);
+    for (let k = 0; k < 2; k++) { o.position.set(x + (rnd() - 0.5), h * (0.75 + k * 0.2), z + (rnd() - 0.5)); o.rotation.set(0, rnd() * 3, 0); const sc = 1.4 + rnd() * 1.3; o.scale.set(sc, sc * 0.8, sc); o.updateMatrix(); clumps.setMatrixAt(i * 2 + k, o.matrix); }
+  });
+  culms.castShadow = clumps.castShadow = true; scene.add(culms); scene.add(clumps);
+
+  signs.forEach((d) => d());
+  }
+
+  // ---------- dioramas: a small sculpted 3D scene per photo ----------
+  const dio = { open: false, scene: new THREE.Scene(), cam: new THREE.PerspectiveCamera(40, 1, 0.1, 60), group: null, yaw: 0.6, tilt: 0.5, dist: 7.4, spin: 0, panel: true, anims: [] };
+  dio.scene.background = new THREE.Color(COL.ground);
+  dio.scene.fog = new THREE.Fog(COL.ground, 12, 30);
+  dio.scene.add(new THREE.HemisphereLight(0xe6eed6, 0x3a2f1c, 0.55));
+  const sun = new THREE.DirectionalLight(0xfff1d6, 1.15);
+  sun.position.set(3.5, 7, 4.5); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006;
+  Object.assign(sun.shadow.camera, { left: -3.2, right: 3.2, top: 3.2, bottom: -3.2, near: 1, far: 20 });
+  dio.scene.add(sun);
+  const rim = new THREE.DirectionalLight(0xbfd8ff, 0.35); rim.position.set(-4, 3, -5); dio.scene.add(rim);
+
+  // materials and painted ground textures
+  const matCache = {};
+  const M = (c, o = {}) => (matCache[c + JSON.stringify(o)] ||= new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.75 }, o)));
+  function paintTex(base, draw, rep = 1) {
+    const c = document.createElement("canvas"); c.width = c.height = 512; const x = c.getContext("2d");
+    x.fillStyle = base; x.fillRect(0, 0, 512, 512); draw(x);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); return t;
+  }
+  let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const speckle = (x, cols, n, size) => { for (let i = 0; i < n; i++) { x.fillStyle = cols[i % cols.length]; x.globalAlpha = 0.25 + rnd() * 0.5; x.fillRect(rnd() * 512, rnd() * 512, size * (0.5 + rnd()), size * (0.5 + rnd())); } x.globalAlpha = 1; };
+  const TEX = {};
+  function ground(kind) {
+    if (TEX[kind]) return TEX[kind];
+    const make = {
+      soil: () => paintTex("#7a6242", (x) => speckle(x, ["#5e4a30", "#8f7652", "#6b5638"], 2600, 5)),
+      grass: () => paintTex("#4f6e35", (x) => { speckle(x, ["#3f5c2a", "#6a8a45", "#587a3a"], 3000, 4); }),
+      cracked: () => paintTex("#9a7c52", (x) => { speckle(x, ["#86693f", "#a98b5f"], 1500, 6); x.strokeStyle = "#5a4024"; x.lineWidth = 2;
+        for (let i = 0; i < 70; i++) { let px = rnd() * 512, py = rnd() * 512; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 5; k++) { px += (rnd() - 0.5) * 70; py += (rnd() - 0.5) * 70; x.lineTo(px, py); } x.stroke(); } }),
+      wood: () => paintTex("#6b4a2c", (x) => { for (let i = 0; i < 16; i++) { x.fillStyle = i % 2 ? "#5e4026" : "#74512f"; x.fillRect(0, i * 32, 512, 31); } speckle(x, ["#4a3220"], 600, 3); }, 2),
+      street: () => paintTex("#6d6a60", (x) => { x.strokeStyle = "#57544b"; x.lineWidth = 3; for (let i = 0; i < 512; i += 40) { x.beginPath(); x.moveTo(0, i); x.lineTo(512, i); x.stroke(); for (let j = (i / 40) % 2 * 30; j < 512; j += 60) { x.beginPath(); x.moveTo(j, i); x.lineTo(j, i + 40); x.stroke(); } } speckle(x, ["#7a776c", "#5d5a52"], 1200, 4); }, 2),
+      marble: () => paintTex("#d9d2c2", (x) => { x.strokeStyle = "#bdb4a1"; x.lineWidth = 2; for (let i = 0; i <= 512; i += 128) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 512); x.moveTo(0, i); x.lineTo(512, i); x.stroke(); } speckle(x, ["#c9c0ad", "#e6e0d3"], 900, 5); }, 2),
+      sand: () => paintTex("#8a7650", (x) => speckle(x, ["#9c875e", "#76643f"], 2000, 5)),
+    };
+    return (TEX[kind] = make[kind]());
+  }
+  const texMat = (kind, o = {}) => (matCache["t" + kind] ||= new THREE.MeshStandardMaterial(Object.assign({ map: ground(kind), roughness: 0.95 }, o)));
+
+  function put(g, mesh, x = 0, y = 0, z = 0) { mesh.position.set(x, y, z); g.add(mesh); return mesh; }
+  const box = (g, w, h, d, c, x = 0, y = 0, z = 0) => put(g, new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof c === "object" ? c : M(c)), x, y + h / 2, z);
+  const cyl = (g, rt, rb, h, c, x = 0, y = 0, z = 0, seg = 16) => put(g, new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), typeof c === "object" ? c : M(c)), x, y + h / 2, z);
+  const capsule = (r, len, c) => new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 10), typeof c === "object" ? c : M(c));
+  const ball = (r, c) => new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), typeof c === "object" ? c : M(c));
+
+  // ---- the figure: an articulated miniature (hips, spine, neck, two-part arms and legs) ----
+  const SKINS = [0xc99a72, 0xb98a63, 0xd1a67e, 0xa97a55];
+  const OUTFIT = {
+    civ: { shirt: 0xe9e3d2, pants: 0x26241f },             // áo bà ba trắng, quần đen
+    civ2: { shirt: 0x6b5236, pants: 0x26241f },            // áo nâu
+    civ3: { shirt: 0x2a2724, pants: 0x2a2724 },            // áo đen
+    cadre: { shirt: 0xc4b083, pants: 0xc4b083 },           // bộ kaki
+    suit: { shirt: 0x2d3038, pants: 0x2d3038, collar: 0xf2efe6 },
+    suitL: { shirt: 0x8d8a82, pants: 0x8d8a82, collar: 0xf2efe6 },
+    fr: { shirt: 0xb7a678, pants: 0xb7a678 },              // quân phục Pháp màu cát
+    militia: { shirt: 0x34392f, pants: 0x2a2724 },
+    soldier: { shirt: 0x5b6a3c, pants: 0x55633a },         // quân phục bộ đội 1954
+  };
+  function figure(g, x, z, o = {}) {
+    const C = Object.assign({ skin: SKINS[Math.floor(rnd() * SKINS.length)], hair: 0x17120e, shoes: 0x1a1612 }, OUTFIT[o.kind || "civ"], o.col || {});
+    const root = new THREE.Group(); root.position.set(x, o.y || 0, z); root.rotation.y = o.face || 0; root.scale.setScalar(o.s || 1); g.add(root);
+    const hips = new THREE.Group(); hips.position.y = 0.4; root.add(hips);
+    const leg = (side) => {
+      const hip = new THREE.Group(); hip.position.set(side * 0.048, 0, 0); hips.add(hip);
+      put(hip, capsule(0.04, 0.15, C.pants), 0, -0.1, 0);
+      const knee = new THREE.Group(); knee.position.y = -0.2; hip.add(knee);
+      put(knee, capsule(0.034, 0.13, C.pants), 0, -0.085, 0);
+      put(knee, new THREE.Mesh(new THREE.BoxGeometry(0.058, 0.035, 0.11), M(C.shoes)), 0, -0.18, 0.018);
+      return { hip, knee };
+    };
+    const L = leg(-1), R = leg(1);
+    const spine = new THREE.Group(); hips.add(spine);
+    const torso = put(spine, capsule(0.072, 0.13, C.shirt), 0, 0.13, 0); torso.scale.set(1, 1, 0.7);
+    if (C.collar) { const col = put(spine, new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 3), M(C.collar)), 0, 0.2, 0.045); col.rotation.x = Math.PI; }
+    if (o.kind === "soldier" || o.kind === "fr" || o.kind === "militia") put(spine, capsule(0.074, 0.005, 0x2c2418), 0, 0.045, 0).scale.set(1.02, 1, 0.74);
+    put(spine, new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.05, 8), M(C.skin)), 0, 0.27, 0);
+    const neck = new THREE.Group(); neck.position.y = 0.3; spine.add(neck);
+    const head = put(neck, ball(0.058, C.skin), 0, 0.045, 0); head.scale.set(0.92, 1.05, 1);
+    put(neck, new THREE.Mesh(new THREE.SphereGeometry(0.061, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), M(C.hair)), 0, 0.05, -0.006);
+    put(neck, ball(0.009, C.skin), 0, 0.04, 0.055); // nose
+    if (o.hat === "non") put(neck, new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.075, 20), M(0xd9c690)), 0, 0.125, 0);
+    if (o.hat === "leaf") { // mũ lá ngụy trang
+      put(neck, new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), M(0x6b7a45)), 0, 0.06, 0);
+      for (let i = 0; i < 6; i++) { const lf = put(neck, new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.09, 4), M(i % 2 ? 0x4f7a35 : 0x6f9a48)), Math.cos(i) * 0.05, 0.12, Math.sin(i) * 0.05); lf.rotation.set(Math.sin(i) * 0.6, 0, Math.cos(i) * 0.6); }
+    }
+    if (o.hat === "helmet") put(neck, new THREE.Mesh(new THREE.SphereGeometry(0.072, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), M(0x4b513b, { roughness: 0.5 })), 0, 0.06, 0);
+    if (o.hat === "kepi") { cyl(neck, 0.05, 0.056, 0.06, 0x7a6a44, 0, 0.08, 0); box(neck, 0.08, 0.008, 0.05, 0x2a2418, 0, 0.08, 0.04); }
+    const arm = (side) => {
+      const sh = new THREE.Group(); sh.position.set(side * 0.098, 0.205, 0); spine.add(sh);
+      put(sh, capsule(0.026, 0.1, C.shirt), 0, -0.065, 0);
+      const el = new THREE.Group(); el.position.y = -0.13; sh.add(el);
+      put(el, capsule(0.022, 0.09, o.shortSleeve ? C.skin : C.shirt), 0, -0.06, 0);
+      const hand = put(el, ball(0.024, C.skin), 0, -0.125, 0);
+      sh.rotation.z = side * 0.08;
+      return { sh, el, hand };
+    };
+    const A = arm(-1), B = arm(1); // A = left, B = right
+    const f = { root, hips, spine, neck, L, R, A, B };
+    POSE[o.pose || "stand"](f, o);
+    if (o.prop === "rifle") rifle(B.hand, o.pose === "aim");
+    if (o.prop === "flag") dio.cloths.push(clothFlag(B.hand, 0, 0, 0, 0.6, "vn", 0.9));
+    if (o.prop === "paper") box(B.hand, 0.07, 0.003, 0.1, 0xf4f0e2, 0, -0.01, 0.03);
+    if (o.idle !== false) idle(f, o);
+    return f;
+  }
+  function rifle(hand, aim) {
+    const r = new THREE.Group(); hand.add(r); r.rotation.set(aim ? -1.5 : -0.4, 0, aim ? 0 : 0.5);
+    box(r, 0.018, 0.026, 0.4, 0x4a3420, 0, -0.01, 0.05);
+    put(r, new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.22, 6), M(0x22221f, { metalness: 0.6, roughness: 0.4 })), 0, 0.012, 0.26).rotation.x = Math.PI / 2;
+  }
+  const POSE = {
+    stand(f) { f.A.sh.rotation.x = 0.05; f.B.sh.rotation.x = -0.05; f.A.el.rotation.x = -0.15; f.B.el.rotation.x = -0.15; },
+    shake(f) { POSE.stand(f); f.B.sh.rotation.x = -0.9; f.B.el.rotation.x = -0.35; f.B.sh.rotation.z = -0.25; },
+    sign(f) { POSE.sit(f); f.B.sh.rotation.x = -0.85; f.B.el.rotation.x = -0.75; f.A.sh.rotation.x = -0.7; f.A.el.rotation.x = -0.9; f.spine.rotation.x = 0.2; f.neck.rotation.x = 0.35; },
+    sit(f) { f.hips.position.y = 0.255; f.L.hip.rotation.x = f.R.hip.rotation.x = -1.5; f.L.knee.rotation.x = f.R.knee.rotation.x = 1.5; f.A.sh.rotation.x = f.B.sh.rotation.x = -0.75; f.A.el.rotation.x = f.B.el.rotation.x = -0.7; },
+    pull(f) { f.spine.rotation.x = 0.55; f.neck.rotation.x = -0.35; f.A.sh.rotation.x = f.B.sh.rotation.x = -1.25; f.A.el.rotation.x = f.B.el.rotation.x = -0.25; f.L.hip.rotation.x = -0.7; f.L.knee.rotation.x = 0.6; f.R.hip.rotation.x = 0.35; f.R.knee.rotation.x = 0.2; f.hips.position.y = 0.37; },
+    rifle(f) { POSE.stand(f); f.B.sh.rotation.x = -0.55; f.B.el.rotation.x = -1.2; f.A.sh.rotation.x = -0.7; f.A.el.rotation.x = -1.3; f.A.sh.rotation.z = 0.4; },
+    aim(f) { f.hips.position.y = 0.24; f.L.hip.rotation.x = -1.4; f.L.knee.rotation.x = 1.4; f.R.hip.rotation.x = 0.2; f.R.knee.rotation.x = 1.9; f.spine.rotation.x = 0.15; f.B.sh.rotation.x = -1.45; f.B.el.rotation.x = -0.15; f.A.sh.rotation.x = -1.4; f.A.sh.rotation.z = 0.5; f.A.el.rotation.x = -0.4; },
+    flag(f) { POSE.stand(f); f.B.sh.rotation.x = -2.9; f.B.sh.rotation.z = -0.2; f.B.el.rotation.x = 0.1; f.A.sh.rotation.z = 0.5; f.L.hip.rotation.x = -0.45; f.L.knee.rotation.x = 0.5; },
+    climb(f) { f.spine.rotation.x = 0.35; f.L.hip.rotation.x = -1.0; f.L.knee.rotation.x = 1.0; f.B.sh.rotation.x = -1.6; f.B.el.rotation.x = -0.6; f.A.sh.rotation.x = -0.4; },
+    hunch(f) { f.hips.position.y = 0.14; f.L.hip.rotation.x = f.R.hip.rotation.x = -2.2; f.L.knee.rotation.x = f.R.knee.rotation.x = 2.5; f.spine.rotation.x = 0.55; f.neck.rotation.x = 0.4; f.A.sh.rotation.x = f.B.sh.rotation.x = -0.9; f.A.el.rotation.x = f.B.el.rotation.x = -1.2; },
+    speak(f) { POSE.stand(f); f.B.sh.rotation.x = -1.6; f.B.sh.rotation.z = -0.3; f.B.el.rotation.x = -0.6; f.A.sh.rotation.x = -0.6; f.A.el.rotation.x = -1.2; },
+    cheer(f) { POSE.stand(f); f.B.sh.rotation.x = -2.6; f.B.el.rotation.x = -0.2; },
+  };
+  // small life: breathing everyone, a pulling rhythm on the rope, a raised arm that waves
+  function idle(f, o) {
+    const ph = rnd() * 6.28, base = f.spine.rotation.x, armBase = f.B.sh.rotation.x;
+    dio.anims.push((t) => {
+      f.spine.scale.y = 1 + 0.012 * Math.sin(t * 2.2 + ph);
+      if (o.pose === "pull") { f.spine.rotation.x = base + 0.09 * Math.sin(t * 2.6 + ph * 0.2); f.root.position.y = (o.y || 0) + 0.008 * Math.abs(Math.sin(t * 2.6 + ph * 0.2)); }
+      else if (o.pose === "cheer") f.B.sh.rotation.x = armBase + 0.25 * Math.sin(t * 4 + ph);
+      else f.neck.rotation.y = 0.15 * Math.sin(t * 0.6 + ph);
+    });
+  }
+
+  // ---- flags as cloth that ripples in the wind ----
+  function flagTex(kind) {
+    if (TEX["f" + kind]) return TEX["f" + kind];
+    const c = document.createElement("canvas"); c.width = 300; c.height = 200; const x = c.getContext("2d");
+    if (kind === "vn") {
+      x.fillStyle = "#c8251d"; x.fillRect(0, 0, 300, 200); x.fillStyle = "#f3cf2f"; x.beginPath();
+      for (let i = 0; i < 10; i++) { const r = i % 2 ? 26 : 66, a = -Math.PI / 2 + i * Math.PI / 5; x.lineTo(150 + r * Math.cos(a), 100 + r * Math.sin(a)); }
+      x.fill();
+    } else { ["#1f3f9a", "#f2f0ea", "#c8251d"].forEach((col, i) => { x.fillStyle = col; x.fillRect(i * 100, 0, 100, 200); }); }
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return (TEX["f" + kind] = t);
+  }
+  function clothFlag(parent, x, y, z, w, kind, poleH = 1.2) {
+    const f = new THREE.Group(); f.position.set(x, y, z); parent.add(f);
+    put(f, new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.012, poleH, 8), M(0x8a7a5a, { metalness: 0.3 })), 0, poleH / 2, 0);
+    const geo = new THREE.PlaneGeometry(w, w * 0.66, 18, 8);
+    const cloth = put(f, new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: flagTex(kind), side: THREE.DoubleSide, roughness: 0.85 })), w / 2 + 0.01, poleH - w * 0.36, 0);
+    const base = geo.attributes.position.array.slice();
+    return { geo, base, w, ph: rnd() * 6 };
+  }
+  function waveCloths(t) {
+    dio.cloths.forEach((c) => {
+      const p = c.geo.attributes.position.array;
+      for (let i = 0; i < p.length; i += 3) { const u = (c.base[i] + c.w / 2) / c.w; p[i + 2] = Math.sin(u * 7 - t * 4 + c.ph) * 0.05 * c.w * u; p[i + 1] = c.base[i + 1] - u * u * 0.04 * c.w; }
+      c.geo.attributes.position.needsUpdate = true; c.geo.computeVertexNormals();
+    });
+  }
+
+  // ---- shared scenery ----
+  function tree(g, x, z, s = 1, bare = false) {
+    cyl(g, 0.03 * s, 0.05 * s, 0.55 * s, 0x4a3520, x, 0, z, 7);
+    if (bare) { for (let i = 0; i < 4; i++) { const b = put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.008 * s, 0.018 * s, 0.35 * s, 5), M(0x4a3520)), x, 0.6 * s, z); b.rotation.set(Math.sin(i * 2) * 0.8, 0, Math.cos(i * 2) * 0.8); } return; }
+    [[0.55, 0.32], [0.78, 0.26], [0.98, 0.18]].forEach(([h, r], i) => put(g, ball(r * s, i % 2 ? 0x3f6e38 : 0x356030), x + (rnd() - 0.5) * 0.08 * s, h * s, z + (rnd() - 0.5) * 0.08 * s).scale.y = 0.85);
+  }
+  function chair(g, x, z, face) { const c = new THREE.Group(); c.position.set(x, 0, z); c.rotation.y = face; g.add(c); box(c, 0.16, 0.02, 0.16, 0x5a3a22, 0, 0.24, 0); box(c, 0.16, 0.2, 0.02, 0x5a3a22, 0, 0.26, -0.07); [[-0.07, -0.07], [0.07, -0.07], [-0.07, 0.07], [0.07, 0.07]].forEach(([a, b]) => box(c, 0.015, 0.24, 0.015, 0x4a2e1a, a, 0, b)); }
+  function table(g, w, d, x, z, cloth = 0x2f5e3a) { box(g, w, 0.04, d, cloth, x, 0.46, z); box(g, w + 0.01, 0.12, d + 0.01, cloth, x, 0.36, z); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => box(g, 0.03, 0.46, 0.03, 0x3a2a18, x + a * (w / 2 - 0.05), 0, z + b * (d / 2 - 0.05))); }
+  function sandbag(g, x, y, z, ry = 0) { const b = put(g, new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.12, 3, 8), M(0xb09468)), x, y + 0.06, z); b.rotation.set(0, ry, Math.PI / 2); b.scale.set(1, 1, 0.75); return b; }
+  function plinthBase(g, kind) {
+    cyl(g, 2.45, 2.55, 0.22, 0x0f2a1d, 0, -0.22, 0, 64);
+    const r = put(g, new THREE.Mesh(new THREE.TorusGeometry(2.47, 0.025, 8, 96), M(0xd8b24a, { metalness: 0.5, roughness: 0.35 })), 0, 0, 0); r.rotation.x = Math.PI / 2;
+    const top = put(g, new THREE.Mesh(new THREE.CircleGeometry(2.44, 64), texMat(kind)), 0, 0.001, 0); top.rotation.x = -Math.PI / 2;
+  }
+
+  const BUILD = {
+    badinh(g) { plinthBase(g, "grass");
+      box(g, 2.0, 0.5, 0.9, 0xe9e3d2, 0, 0, -1.25); box(g, 2.02, 0.1, 0.92, 0xb0261d, 0, 0.4, -1.25);
+      for (let i = 0; i < 3; i++) box(g, 0.5, 0.17 * (3 - i) - 0.01, 0.12, 0xd9d2bf, 0, 0, -0.74 + i * 0.12);
+      box(g, 0.22, 0.3, 0.14, 0x6b4a2c, 0, 0.5, -0.95);
+      figure(g, 0, -1.05, { kind: "cadre", pose: "speak", y: 0.5 });
+      [-0.7, -0.4, 0.4, 0.7].forEach((x) => figure(g, x, -1.3, { kind: x < 0 ? "cadre" : "civ", y: 0.5 }));
+      dio.cloths.push(clothFlag(g, -0.95, 0.5, -1.55, 0.7, "vn", 2.2));
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 8; c++) {
+        const kinds = ["civ", "civ2", "civ3", "cadre"];
+        figure(g, -1.45 + c * 0.42 + (r % 2) * 0.2 + (rnd() - 0.5) * 0.08, -0.05 + r * 0.42, { kind: kinds[(r * 3 + c) % 4], face: Math.PI + (rnd() - 0.5) * 0.4, hat: (r + c) % 3 === 0 ? "non" : null, pose: (r * c) % 7 === 3 ? "cheer" : "stand" });
+      }
+      [[-2.0, -0.6], [2.0, -0.5], [-1.8, 1.0], [1.9, 1.1]].forEach(([x, z]) => tree(g, x, z, 1.2));
+    },
+    famine(g) { plinthBase(g, "cracked");
+      for (let i = 0; i < 90; i++) { const a = rnd() * 6.28, r = 0.7 + rnd() * 1.6; const st = cyl(g, 0.004, 0.008, 0.3 + rnd() * 0.25, rnd() > 0.5 ? 0xb59a5e : 0x9a8048, Math.cos(a) * r, 0, Math.sin(a) * r, 4); st.rotation.set((rnd() - 0.5) * 1.3, 0, (rnd() - 0.5) * 1.3); }
+      put(g, new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [0.24, 0.02], [0.34, 0.25], [0.3, 0.55], [0.2, 0.66], [0.21, 0.7]].map(([a, b]) => new THREE.Vector2(a, b)), 24), M(0x5a3a22, { side: THREE.DoubleSide, roughness: 0.6 })), 0.2, 0, -0.2);
+      put(g, new THREE.Mesh(new THREE.CircleGeometry(0.19, 20), M(0x0d0906)), 0.2, 0.6, -0.2).rotation.x = -Math.PI / 2;
+      const lid = cyl(g, 0.23, 0.23, 0.03, 0x6b4a2c, 0.75, 0.02, 0.15, 20); lid.rotation.z = 1.35;
+      figure(g, -0.45, 0.3, { kind: "civ2", pose: "hunch", face: 0.6, idle: true });
+      figure(g, -0.15, 0.55, { kind: "civ", pose: "hunch", face: 0.2, s: 0.7 });
+      figure(g, -0.75, 0.6, { kind: "civ3", pose: "hunch", face: 1.0, s: 0.75 });
+      tree(g, -1.5, -0.9, 1.3, true); tree(g, 1.4, -1.2, 1.1, true);
+    },
+    sobo(g) { plinthBase(g, "wood");
+      box(g, 3.6, 1.4, 0.08, 0xd8cfb8, 0, 0, -1.6); [-1.1, 0, 1.1].forEach((x) => box(g, 0.5, 0.8, 0.02, 0x9ab0b8, x, 0.4, -1.55));
+      table(g, 1.6, 0.7, 0, -0.35);
+      box(g, 0.24, 0.005, 0.32, 0xf4f0e2, -0.35, 0.5, -0.3); box(g, 0.24, 0.005, 0.32, 0xf4f0e2, 0.35, 0.5, -0.3);
+      dio.cloths.push(clothFlag(g, -0.7, 0.5, -0.6, 0.22, "vn", 0.4)); dio.cloths.push(clothFlag(g, 0.55, 0.5, -0.6, 0.22, "fr", 0.4));
+      chair(g, -0.35, 0.12, Math.PI); chair(g, 0.35, 0.12, Math.PI);
+      figure(g, -0.35, 0.1, { kind: "cadre", pose: "sign", face: Math.PI });
+      figure(g, 0.35, 0.1, { kind: "suit", pose: "sign", face: Math.PI });
+      [-1.2, -0.85].forEach((x) => figure(g, x, 0.2, { kind: "cadre", face: Math.PI - 0.4 }));
+      [0.95, 1.3].forEach((x, i) => figure(g, x, 0.2, { kind: i ? "fr" : "suitL", face: Math.PI + 0.4, hat: i ? "kepi" : null }));
+    },
+    moutet(g) { plinthBase(g, "wood");
+      box(g, 3.4, 1.5, 0.08, 0xcfc4a8, 0, 0, -1.5); box(g, 0.7, 1.1, 0.02, 0x9ab0b8, 0, 0.25, -1.45);
+      table(g, 0.9, 0.5, 0, -0.75, 0x6b4a2c); box(g, 0.24, 0.005, 0.32, 0xf4f0e2, 0, 0.5, -0.75);
+      figure(g, -0.21, 0.05, { kind: "cadre", pose: "shake", face: Math.PI / 2 });
+      figure(g, 0.21, 0.05, { kind: "suitL", pose: "shake", face: -Math.PI / 2 });
+      dio.cloths.push(clothFlag(g, -1.2, 0, -0.9, 0.5, "vn", 1.4)); dio.cloths.push(clothFlag(g, 1.1, 0, -0.9, 0.5, "fr", 1.4));
+      [-0.9, 0.9].forEach((x, i) => figure(g, x, 0.4, { kind: i ? "suit" : "cadre", face: i ? -2.4 : 2.4, s: 0.95 }));
+    },
+    tuve(g) { plinthBase(g, "street");
+      [-1.0, 0, 1.0].forEach((x) => { box(g, 0.92, 1.05, 0.5, 0xddd2b4, x, 0, -1.35);
+        const roof = put(g, new THREE.Mesh(new THREE.CylinderGeometry(0, 0.62, 0.45, 4), M(0x8a3b2a)), x, 1.27, -1.35); roof.rotation.y = Math.PI / 4; roof.scale.z = 0.55;
+        put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.02, 16, 1, false, 0, Math.PI), M(0x2a1d12)), x, 0.62, -1.09).rotation.set(Math.PI / 2, 0, Math.PI / 2);
+        box(g, 0.34, 0.62, 0.02, 0x2a1d12, x, 0, -1.09); });
+      for (let row = 0; row < 3; row++) for (let i = 0; i < 12; i++) sandbag(g, -1.45 + i * 0.25 + (row % 2) * 0.12, row * 0.1, 0.35 + Math.sin(i * 0.5) * 0.05, 0.1);
+      const cart = new THREE.Group(); cart.position.set(1.55, 0, 0.6); cart.rotation.set(0, 0.6, 1.2); g.add(cart); box(cart, 0.5, 0.05, 0.3, 0x5a3a22); put(cart, new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.02, 6, 16), M(0x3a2a18)), 0, 0, 0.18);
+      [[-0.9, "rifle", "helmet"], [-0.35, "aim", null], [0.2, "rifle", "helmet"], [0.75, "aim", "helmet"]].forEach(([x, pose, hat]) => figure(g, x, 0.05, { kind: "militia", pose, hat, prop: "rifle", face: 0.05 }));
+      dio.cloths.push(clothFlag(g, -1.65, 0, -0.5, 0.5, "vn", 1.5));
+    },
+    keophao(g) { plinthBase(g, "grass");
+      const slope = put(g, new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.1, 1.3), texMat("soil")), 0, 0.5, 0); slope.rotation.z = 0.3; slope.receiveShadow = true;
+      const up = (x) => 0.55 + x * Math.tan(0.3);
+      const gun = new THREE.Group(); gun.position.set(-1.15, up(-1.15) - 0.05, 0); gun.rotation.z = 0.3; g.add(gun);
+      [-0.22, 0.22].forEach((z) => { const w = put(gun, new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.035, 8, 20), M(0x2a2a24)), 0, 0.2, z); for (let k = 0; k < 6; k++) { const sp = put(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.32, 4), M(0x3a3a30)), 0, 0.2, z); sp.rotation.z = (k / 6) * Math.PI; } });
+      box(gun, 0.25, 0.25, 0.4, 0x4a5636, -0.05, 0.12, 0);
+      put(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.065, 1.0, 14), M(0x45503a, { metalness: 0.35, roughness: 0.5 })), 0.45, 0.33, 0).rotation.z = -Math.PI / 2 + 0.12;
+      put(gun, new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.9, 6), M(0x3a4330)), -0.55, 0.12, 0).rotation.z = Math.PI / 2 - 0.15;
+      [-0.18, 0.18].forEach((z) => { const rope = put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 2.3, 5), M(0xc9b68a)), 0.15, up(0.15) + 0.32, z); rope.rotation.z = Math.PI / 2 + 0.3; });
+      for (let i = 0; i < 5; i++) [-0.28, 0.28].forEach((z, j) => { const x = -0.55 + i * 0.36 + j * 0.12; figure(g, x, z, { kind: "soldier", pose: "pull", hat: "leaf", face: Math.PI / 2, y: up(x) + 0.05 }).root.rotation.z = 0.3; });
+      figure(g, 1.45, -0.55, { kind: "soldier", pose: "cheer", hat: "leaf", face: -Math.PI / 2 - 0.4, y: up(1.45) + 0.05 });
+      for (let i = 0; i < 9; i++) { const a = (i / 9) * 6.28; tree(g, Math.cos(a) * 2.0, Math.sin(a) * 1.9, 0.9 + rnd() * 0.5); }
+    },
+    dbp(g) { plinthBase(g, "sand");
+      [[-1.6, -1.1, 0.8], [1.5, -1.3, 1.0], [1.8, 0.5, 0.55], [-1.9, 0.6, 0.5]].forEach(([x, z, h]) => { const hill = put(g, new THREE.Mesh(new THREE.ConeGeometry(0.75, h, 12), texMat("grass")), x, h / 2, z); hill.scale.z = 0.8; });
+      const dome = put(g, new THREE.Mesh(new THREE.SphereGeometry(0.85, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), M(0x7d7458, { roughness: 0.6, metalness: 0.2 })), 0, 0, 0); dome.scale.y = 0.42;
+      for (let i = 0; i < 10; i++) { const rib = put(g, new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.008, 4, 40, Math.PI), M(0x5e5640)), 0, 0, 0); rib.rotation.y = (i / 10) * Math.PI; rib.scale.y = 0.42; }
+      for (let i = 0; i < 26; i++) { const a = (i / 26) * 6.28; sandbag(g, Math.cos(a) * 0.95, 0, Math.sin(a) * 0.95, -a); }
+      figure(g, 0.05, 0.05, { kind: "soldier", pose: "flag", hat: "leaf", prop: "flag", y: 0.34, face: 0.4 });
+      figure(g, 0.45, 0.45, { kind: "soldier", pose: "climb", hat: "leaf", prop: "rifle", y: 0.17, face: -0.6 });
+      figure(g, -0.55, 0.6, { kind: "soldier", pose: "cheer", hat: "leaf", y: 0.02, face: 0.3 });
+      figure(g, -1.0, 1.1, { kind: "soldier", pose: "rifle", hat: "leaf", prop: "rifle", face: 0.8 });
+      [[-0.9, 1.5], [1.2, 1.3], [-1.6, 0.1], [0.9, -1.3]].forEach(([x, z]) => { put(g, new THREE.Mesh(new THREE.CircleGeometry(0.22 + rnd() * 0.1, 16), M(0x3a2c1c)), x, 0.004, z).rotation.x = -Math.PI / 2; });
+      for (let i = 0; i < 7; i++) { const x = -1.8 + i * 0.3; cyl(g, 0.01, 0.012, 0.25, 0x4a3a28, x, 0, 1.9 - Math.abs(x) * 0.25, 5); }
+    },
+    geneva(g) { plinthBase(g, "marble");
+      box(g, 3.8, 1.8, 0.08, 0xe6dfcf, 0, 0, -1.7); [-1.3, -0.45, 0.45, 1.3].forEach((x) => box(g, 0.4, 1.2, 0.02, 0x9ab0b8, x, 0.35, -1.65));
+      table(g, 2.4, 0.4, 0, -0.85); table(g, 0.4, 1.4, -1.2, 0.0); table(g, 0.4, 1.4, 1.2, 0.0);
+      [-0.8, -0.27, 0.27, 0.8].forEach((x, i) => { chair(g, x, -1.2, 0); figure(g, x, -1.18, { kind: i % 2 ? "suitL" : "suit", pose: "sit", face: 0 }); box(g, 0.2, 0.005, 0.15, 0xf4f0e2, x, 0.5, -0.8); });
+      [-0.4, 0.15, 0.6].forEach((z) => { chair(g, -1.55, z, Math.PI / 2); figure(g, -1.53, z, { kind: "suit", pose: "sit", face: Math.PI / 2 }); chair(g, 1.55, z, -Math.PI / 2); figure(g, 1.53, z, { kind: z > 0 ? "cadre" : "suitL", pose: "sit", face: -Math.PI / 2 }); });
+      const board = new THREE.Group(); board.position.set(0, 0, 1.0); g.add(board); // faces the visitor's side of the table
+      box(board, 0.04, 1.0, 0.04, 0x3a2a18, -0.45, 0, 0); box(board, 0.04, 1.0, 0.04, 0x3a2a18, 0.45, 0, 0);
+      const c = document.createElement("canvas"); c.width = 512; c.height = 360; const x2 = c.getContext("2d");
+      x2.fillStyle = "#efe8d5"; x2.fillRect(0, 0, 512, 360); x2.strokeStyle = "#c8251d"; x2.lineWidth = 6; x2.setLineDash([22, 12]);
+      x2.beginPath(); x2.moveTo(30, 180); x2.lineTo(482, 180); x2.stroke();
+      x2.fillStyle = "#1b2b20"; x2.font = '900 54px "Big Shoulders Display", sans-serif'; x2.textAlign = "center"; x2.fillText("21/7/1954", 256, 90);
+      x2.font = '500 30px "Be Vietnam Pro", sans-serif'; x2.fillText("Vĩ tuyến 17 · giới tuyến tạm thời", 256, 240); x2.fillText("Tổng tuyển cử: 7/1956", 256, 290);
+      const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding;
+      put(board, new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.67), new THREE.MeshBasicMaterial({ map: tx, side: THREE.DoubleSide })), 0, 1.2, 0.03);
+    },
+  };
+
+  const dioEl = document.getElementById("dio"), dioAside = dioEl.querySelector("aside");
+  function openDio(e) {
+    if (dio.group) dio.scene.remove(dio.group);
+    dio.anims = []; dio.cloths = []; seed = 11;
+    const g = new THREE.Group(); BUILD[e.img](g);
+    g.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    dio.scene.add(g); dio.group = g;
+    dio.yaw = 0.6; dio.tilt = 0.5; dio.dist = 7.4; dio.spin = 0;
+    document.getElementById("dioDate").textContent = e.date;
+    document.getElementById("dioTitle").textContent = TITLES[e.img];
+    document.getElementById("dioText").textContent = e.text;
+    const img = document.getElementById("dioImg"); img.src = "img/" + e.img + ".jpg"; img.alt = e.text;
+    dio.open = true; dioEl.hidden = false; keys.clear(); cap.classList.add("off"); shown = null; resize();
+    document.getElementById("dioClose").focus();
+  }
+  dio.animate = (t) => { dio.anims.forEach((fn) => fn(t)); waveCloths(t); };
+  function closeDio() { dio.open = false; dioEl.hidden = true; resize(); canvas.focus?.(); }
+  document.getElementById("dioClose").addEventListener("click", closeDio);
+  // hide the record panel so the model fills the screen
+  function setPanel(on) {
+    dio.panel = on; dioAside.hidden = !on;
+    const b = document.getElementById("dioPanel"); b.textContent = on ? "Ẩn bảng thông tin" : "Hiện bảng thông tin"; b.setAttribute("aria-pressed", String(!on));
+    resize();
+  }
+  document.getElementById("dioPanel").addEventListener("click", () => setPanel(!dio.panel));
+
+  // movement: keys, drag to look, hold-to-walk on touch
+  const keys = new Set();
+  addEventListener("keydown", (e) => { if (!door.hidden) return; keys.add(e.key.toLowerCase()); if (e.key.startsWith("Arrow")) e.preventDefault(); });
+  addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+  addEventListener("blur", () => keys.clear());
+  let drag = null;
+  let moved = 0;
+  canvas.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY }; moved = 0; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; moved += Math.abs(dx) + Math.abs(dy);
+    if (dio.open) { dio.yaw += dx * 0.008; dio.tilt = Math.max(0.15, Math.min(1.1, dio.tilt + dy * 0.004)); dio.spin = 0; }
+    else { yaw -= dx * 0.0042; pitch = Math.max(-0.7, Math.min(0.6, pitch - dy * 0.0035)); }
+    drag = { x: e.clientX, y: e.clientY };
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    drag = null;
+    if (dio.open || moved > 6 || !door.hidden) return;
+    const r = canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObjects(clickables)[0];
+    if (hit && hit.distance < 6.5) openDio(hit.object.userData.ex);
+  });
+  canvas.addEventListener("pointercancel", () => (drag = null));
+  canvas.addEventListener("wheel", (e) => { if (dio.open) { e.preventDefault(); dio.dist = Math.max(3.5, Math.min(11, dio.dist + e.deltaY * 0.004)); } }, { passive: false });
+  addEventListener("keydown", (e) => {
+    if (dio.open && e.key === "Escape") closeDio();
+    else if (!dio.open && door.hidden && (e.key === "e" || e.key === "E" || e.key === "Enter") && shown) openDio(shown.e);
+  });
+  let walkHeld = false;
+  const walk = document.getElementById("walk");
+  walk.addEventListener("pointerdown", (e) => { walkHeld = true; walk.setPointerCapture(e.pointerId); });
+  ["pointerup", "pointercancel"].forEach((t) => walk.addEventListener(t, () => (walkHeld = false)));
+
+  const door = document.getElementById("door");
+  const fsBtn = document.getElementById("fs");
+  function toggleFull() {
+    const d = document;
+    const req = d.fullscreenElement ? d.exitFullscreen?.() : d.documentElement.requestFullscreen?.();
+    req?.catch?.(() => { fsBtn.title = "Trình duyệt này không cho bật toàn màn hình"; });
+  }
+  fsBtn.addEventListener("click", toggleFull);
+  document.addEventListener("fullscreenchange", () => { const on = !!document.fullscreenElement; fsBtn.setAttribute("aria-pressed", String(on)); fsBtn.setAttribute("aria-label", on ? "Thoát toàn màn hình" : "Toàn màn hình"); setTimeout(resize, 60); });
+  addEventListener("keydown", (e) => { if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey) toggleFull(); });
+  document.getElementById("enter").addEventListener("click", () => { door.hidden = true; canvas.focus?.(); });
+
+  const cap = document.getElementById("cap"), capDate = document.getElementById("capDate"), capText = document.getElementById("capText");
+  let shown = null;
+  function nearest() {
+    let best = null, bd = 4.2;
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    for (const s of exhibitSpots) {
+      const d = new THREE.Vector3(s.pos.x - camera.position.x, 0, s.pos.z - camera.position.z);
+      const dist = d.length(); if (dist < bd && d.normalize().dot(fwd) > 0.55) { bd = dist; best = s; }
+    }
+    return best;
+  }
+
+  function resize() {
+    const w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    dio.cam.aspect = w / h;
+    if (!dio.panel) dio.cam.clearViewOffset();
+    else if (w > 760) dio.cam.setViewOffset(w, h, Math.min(380, w) / 2, 0, w, h); else dio.cam.setViewOffset(w, h, 0, h * 0.2, w, h);
+    document.body.classList.toggle("dio-panel", dio.open && dio.panel && w > 760);
+    dio.cam.updateProjectionMatrix();
+  }
+  addEventListener("resize", resize); resize();
+
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let last = performance.now(), t = 0;
+
+  // ---------- walking: collide with nearby meshes, follow the floor ----------
+  const colliders = [];
+  function collectColliders() {
+    scene.updateMatrixWorld(true);
+    scene.traverse((m) => {
+      if (!m.isMesh || m.isInstancedMesh || m.userData.ghost) return;
+      let p = m; while (p) { if (p === bambooRoot) return; p = p.parent; }
+      m.geometry.computeBoundingSphere();
+      colliders.push({ m, s: m.geometry.boundingSphere.clone().applyMatrix4(m.matrixWorld) });
+    });
+  }
+  const near0 = () => colliders.map((c) => c.m);
+  function nearColliders() { return colliders.filter((c) => c.s.center.distanceTo(feet) - c.s.radius < 5).map((c) => c.m); }
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), o = new THREE.Vector3(), dir = new THREE.Vector3();
+  function floorAt(x, z, list) { ray.set(o.set(x, feet.y + 0.6, z), down); ray.far = 80; return ray.intersectObjects(list, false)[0]; }
+  let floorY = 0;
+  function tryMove(dx, dz, list) {
+    const len = Math.hypot(dx, dz); if (!len) return false;
+    dir.set(dx / len, 0, dz / len);
+    for (const h of [0.45, 0.95, 1.5]) { ray.set(o.set(feet.x, feet.y + h, feet.z), dir); ray.far = len + 0.45; if (ray.intersectObjects(list, false).length) return false; }
+    const nx = feet.x + dx, nz = feet.z + dz;
+    if (Math.hypot(nx, nz - 10) > 125) return false;
+    for (const ob of obstacles) if (Math.hypot(nx - ob.x, nz - ob.z) < ob.r && Math.abs(feet.y - ob.y) < 2) return false;
+    const f = floorAt(nx, nz, list);
+    if (!f || f.object.userData.water) return false;
+    feet.x = nx; feet.z = nz; floorY = f.point.y;
+    return true;
+  }
+  window.__museum = { feet, tryMove, nearColliders, floor: () => floorY }; // test hook: lets a script walk the route
+  // the region the visitor is in, for the corner label
+  const whereSpan = document.querySelector(".where span");
+  let zoneShown = "";
+  function zoneName() {
+    const { x, z } = feet;
+    if (Math.abs(x) < 16.8 && z > -32 && z < -16) return z < -25 ? "Phòng 1946 · Hòa để tiến" : "Sảnh · Cây tre · Hôm nay";
+    if (Math.abs(x + 27) < 4.5 && z > -10 && z < 14) return "Dãy nhà 1945 · Ngàn cân treo sợi tóc";
+    if (Math.abs(x - 27) < 4.5 && z > -10 && z < 14) return "Dãy nhà 1951–1954 · Đến thắng lợi";
+    if (Math.abs(x) < 16 && z >= 19.5 && z <= 30.5) return "Cổng thành";
+    if (Math.abs(x) < 38.5 && z > -43.5 && z < 23.5) return "Sân lớn";
+    return "Ngoài hào · đi qua cầu để vào cổng";
+  }
+  // number keys jump to an area, so presenters can skip the walk
+  const JUMPS = { 1: [0, 0, 42, 0], 2: [-27.5, 1.2, -1.5, Math.PI / 2], 3: [0, 3.9, -17.5, 0], 4: [27, 1.2, 2, -Math.PI / 2], 0: [START.x, 0, START.z, 0] };
+  addEventListener("keydown", (e) => {
+    const j = JUMPS[e.key]; if (!j || dio.open || !door.hidden) return;
+    feet.set(j[0], j[1], j[2]); floorY = j[1]; yaw = j[3]; pitch = 0.02;
+  });
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+    if (dio.open) {
+      if (!reduce) dio.spin = Math.min(0.25, dio.spin + dt * 0.05);
+      dio.yaw += dio.spin * dt;
+      dio.group.rotation.y = dio.yaw;
+      dio.cam.position.set(0, Math.sin(dio.tilt) * dio.dist + 0.6, Math.cos(dio.tilt) * dio.dist);
+      dio.cam.lookAt(0, 0.95, 0);
+      dio.animate(t);
+      renderer.render(dio.scene, dio.cam);
+      requestAnimationFrame(frame);
+      return;
+    }
+    const k = (n) => keys.has(n);
+    const turn = (k("arrowleft") ? 1 : 0) - (k("arrowright") ? 1 : 0);
+    yaw += turn * 1.6 * dt;
+    const fwd = (k("w") || k("arrowup") || walkHeld ? 1 : 0) - (k("s") || k("arrowdown") ? 1 : 0);
+    const str = (k("d") ? 1 : 0) - (k("a") ? 1 : 0);
+    if (fwd || str) {
+      const sp = (k("shift") ? 9 : 4) * dt, sy = Math.sin(yaw), cy = Math.cos(yaw);
+      const dx = (-sy * fwd + cy * str) * sp, dz = (-cy * fwd - sy * str) * sp;
+      const near = nearColliders();
+      tryMove(dx, dz, near) || tryMove(dx, 0, near) || tryMove(0, dz, near);
+    }
+    feet.y += (floorY - feet.y) * Math.min(1, dt * 12);
+    camera.position.set(feet.x, feet.y + EYE, feet.z);
+    camera.rotation.set(pitch, yaw, 0, "YXZ");
+    if (!reduce) {
+      const p = flagGeo.attributes.position.array;
+      for (let i = 0; i < p.length; i += 3) { const u = (flagBase[i] + 3) / 6; p[i + 2] = Math.sin(u * 6 - t * 3.5) * 0.35 * u; }
+      flagGeo.attributes.position.needsUpdate = true; flagGeo.computeVertexNormals();
+    }
+    const z = zoneName();
+    if (z !== zoneShown) { zoneShown = z; whereSpan.textContent = z; }
+
+    if (!reduce) {
+      // the root never moves: the whole culm sways about its base, leaves flutter on top
+      bamboo.rotation.z = 0.035 * Math.sin(t * 0.7) + 0.015 * Math.sin(t * 1.9);
+      bamboo.rotation.x = 0.02 * Math.sin(t * 0.55 + 1);
+      leaves.forEach((l) => { l.m.rotation.z = l.base + 0.12 * Math.sin(t * 2.1 + l.ph); });
+    }
+
+    const n = nearest();
+    if (n !== shown) {
+      shown = n;
+      if (n) { capDate.textContent = n.e.date; capText.textContent = n.e.text; }
+      cap.classList.toggle("off", !n);
+    }
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+
+  const fontsReady = Promise.all([
+    document.fonts.load('900 40px "Big Shoulders Display"'),
+    document.fonts.load('500 20px "Be Vietnam Pro"'),
+  ]).catch(() => {});
+  fontsReady.then(() => {
+    buildBamboo(); buildWorld(); EXHIBITS.forEach(hangExhibit); collectColliders();
+    floorY = (floorAt(feet.x, feet.z, near0()) || { point: { y: 0 } }).point.y;
+    console.assert(exhibitSpots.length === 8, "exhibits missing");
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+
+</html>
