@@ -123,6 +123,11 @@ em { font-style: normal; color: var(--culm-light); }
 .thanks { font-family: var(--display); font-weight: 800; font-size: calc(var(--u) * 4.4); color: var(--paper); margin: 0; }
 
 .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * 5); }
+.prompts { margin: 0; padding: 0; display: grid; gap: calc(var(--u) * 1.1); list-style: none; counter-reset: p; }
+.prompts li { font-size: max(14px, calc(var(--u) * 2.4)); line-height: 1.35; }
+ol.prompts li { counter-increment: p; padding-left: 1.5em; }
+ol.prompts li::before { content: counter(p) "."; background: none; width: auto; height: auto; top: 0; color: var(--culm); font-weight: 600; }
+.prompts span { color: var(--muted); }
 .split > div { display: grid; gap: calc(var(--u) * 1.6); align-content: start; border-top: 2px solid var(--culm-dark); padding-top: calc(var(--u) * 1.6); }
 .split h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: calc(var(--u) * 4.2); letter-spacing: 0.02em; text-transform: uppercase; }
 .split .keep h3 { color: var(--culm); }
@@ -352,10 +357,30 @@ em { font-style: normal; color: var(--culm-light); }
       <p class="thanks">Cảm ơn thầy/cô và các bạn đã lắng nghe</p>
     </section>
 
+    <section class="slide" data-gust="0.3" data-amb="0.15">
+      <p class="date">Công cụ: Claude (Anthropic) · Impeccable · Three.js</p>
+      <h2>Báo cáo sử dụng AI</h2>
+      <div class="split">
+        <div class="keep"><h3>Các bước yêu cầu AI</h3><ol class="prompts">
+          <li>Đọc toàn bộ tài liệu <span>(slide VNR202)</span></li>
+          <li>Viết script cho 5 người, dễ nói dễ hiểu <span>→ rút gọn → 15 phút</span></li>
+          <li>Làm website thuyết trình độc đáo, dùng skill Impeccable <span>→ nhóm chọn ý tưởng cây tre</span></li>
+          <li>Thêm ảnh thật từ nguồn trên mạng, không dùng ảnh AI</li>
+          <li>Viết câu trả lời dựa vào script, tóm tắt đủ ý</li>
+          <li>Làm bảo tàng 3D bằng Three.js: bấm tranh ra mô hình, đi lại tự do</li>
+        </ol></div>
+        <div class="bend"><h3>Ai làm gì</h3><ul class="prompts">
+          <li><em>AI:</em> viết code website và bảo tàng 3D, tìm ảnh tư liệu, soạn nháp kịch bản.</li>
+          <li><em>Nhóm:</em> chọn hướng, duyệt từng bản, sửa lời cho tự nhiên, chia phần thuyết trình.</li>
+          <li><em>Nguồn:</em> mốc thời gian theo slide bài giảng; ảnh từ Wikimedia Commons, không có ảnh do AI vẽ.</li>
+        </ul></div>
+      </div>
+    </section>
+
     <div class="chrome">
       <span class="hint" id="hint">← → để chuyển · F toàn màn hình</span>
       <button type="button" id="prev" aria-label="Slide trước"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <span id="count">01 / 19</span>
+      <span id="count">01 / 20</span>
       <button type="button" id="next" aria-label="Slide sau"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
     <p class="sr" aria-live="polite" id="live"></p>
@@ -374,7 +399,7 @@ em { font-style: normal; color: var(--culm-light); }
   ];
   const slides = [...document.querySelectorAll(".slide")];
   const N = slides.length;
-  console.assert(N === 19 && LEGS.every((l, i) => l.at < N && (!i || l.at > LEGS[i - 1].at)), "slide/leg mismatch");
+  console.assert(N === 20 && LEGS.every((l, i) => l.at < N && (!i || l.at > LEGS[i - 1].at)), "slide/leg mismatch");
 
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = (id) => document.getElementById(id);
